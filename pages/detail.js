@@ -13,32 +13,46 @@ const riskBadgeColor = {
   'Aggressive':                'bg-rose-100 text-rose-700',
 };
 
-const statusColor = {
-  ok:       'bg-emerald-50 text-emerald-700 border-emerald-200',
-  warning:  'bg-amber-50 text-amber-700 border-amber-200',
-  mismatch: 'bg-rose-50 text-rose-700 border-rose-200',
+const tagStyle = {
+  GROWTH:    'bg-emerald-100 text-emerald-700',
+  REBALANCE: 'bg-rose-100 text-rose-700',
+  UPSELL:    'bg-violet-100 text-violet-700',
+  CROSSSELL: 'bg-amber-100 text-amber-700',
+};
+
+const statusBg = {
+  aligned:  'bg-emerald-50 border-emerald-200 text-emerald-800',
+  warning:  'bg-amber-50 border-amber-200 text-amber-800',
+  mismatch: 'bg-rose-50 border-rose-200 text-rose-800',
+  unknown:  'bg-slate-50 border-slate-200 text-slate-700',
 };
 
 const iconFor = (key) => {
-  // Simple inline SVG icons keyed by talking-point type
-  const common = "w-5 h-5";
+  const c = "w-5 h-5";
   switch (key) {
     case 'concentration':
-      return <svg className={common} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>;
+      return <svg className={c} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>;
     case 'diversify':
-      return <svg className={common} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>;
+      return <svg className={c} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z"/></svg>;
     case 'risk':
-      return <svg className={common} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2z"/><path d="M12 9v5M12 17h.01"/></svg>;
+      return <svg className={c} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M12 2L1 21h22L12 2z"/><path d="M12 9v5M12 17h.01"/></svg>;
     case 'aligned':
-      return <svg className={common} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>;
+      return <svg className={c} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4"/><circle cx="12" cy="12" r="10"/></svg>;
     case 'opportunity':
-      return <svg className={common} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
+      return <svg className={c} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>;
     case 'horizon':
-      return <svg className={common} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
+      return <svg className={c} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>;
     default:
-      return <svg className={common} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>;
+      return <svg className={c} fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>;
   }
 };
+
+const Field = ({ label, value }) => (
+  <div>
+    <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">{label}</div>
+    <div className="text-sm font-medium text-slate-800 mt-0.5 truncate">{value || '—'}</div>
+  </div>
+);
 
 export default function Detail() {
   const router = useRouter();
@@ -74,7 +88,7 @@ export default function Detail() {
       <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
         <div className="bg-white rounded-lg border border-slate-200 p-6 text-center max-w-sm">
           <div className="text-rose-600 font-semibold mb-2">Client not found</div>
-          <div className="text-sm text-slate-500">Customer ID: {customer_id}</div>
+          <div className="text-sm text-slate-500 break-all">Customer ID: {customer_id}</div>
         </div>
       </div>
     );
@@ -99,11 +113,15 @@ export default function Detail() {
               <div className="flex-1 min-w-0">
                 <div className="text-xs uppercase tracking-widest text-brand-100">Client Briefing</div>
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold mt-0.5 break-words">{summary.name}</h1>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="text-xs px-2 py-1 bg-white/20 rounded-full">{summary.segment}</span>
+                <div className="text-sm text-brand-100 mt-1">
+                  {summary.segment}
+                  {summary.age && ` · ${summary.age} y/o`}
+                  {summary.gender && summary.gender !== 'N/A' && ` · ${summary.gender}`}
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2">
                   {priority_flags.map((f, i) => (
-                    <span key={f} className="text-xs px-2 py-1 bg-white text-brand-700 rounded-full font-medium">
-                      {f} · {flag_labels[i]}
+                    <span key={f} className="text-[11px] px-2 py-1 bg-white text-brand-700 rounded-full font-medium">
+                      {flag_labels[i]}
                     </span>
                   ))}
                 </div>
@@ -112,46 +130,48 @@ export default function Detail() {
           </div>
         </header>
 
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-6 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
-          {/* LEFT / MAIN column (2/3 on desktop) */}
-          <div className="lg:col-span-2 space-y-6">
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
+          {/* LEFT — main column */}
+          <div className="lg:col-span-2 space-y-5">
 
-            {/* Summary card */}
+            {/* About Client */}
             <section className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
-              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-4">Customer Summary</div>
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-4">About Client</div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                <Field label="Profession" value={summary.profession} />
+                <Field label="Marital Status" value={summary.marital_status} />
+                <Field label="Location" value={summary.location} />
+              </div>
+            </section>
+
+            {/* Wealth Profile */}
+            <section className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
+              <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-4">Wealth Profile</div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
-                  <div className="text-xs text-slate-500">Total AUM</div>
-                  <div className="text-lg sm:text-xl font-semibold text-brand-700 mt-0.5">{fmt(summary.total_aum)}</div>
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Total AUM</div>
+                  <div className="text-lg sm:text-xl font-bold text-brand-700 mt-0.5">{fmt(summary.total_aum)}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Risk Profile</div>
-                  <div className="mt-0.5">
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Income</div>
+                  <div className="text-sm font-medium text-slate-800 mt-1.5">₱{summary.income}</div>
+                </div>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Risk Profile</div>
+                  <div className="mt-1.5">
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${riskBadgeColor[summary.risk_profile] || 'bg-slate-100 text-slate-600'}`}>
                       {summary.risk_profile}
                     </span>
                   </div>
                 </div>
                 <div>
-                  <div className="text-xs text-slate-500">Holdings</div>
-                  <div className="text-lg font-semibold text-slate-900 mt-0.5">{summary.holdings_count}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Income</div>
-                  <div className="text-sm font-medium text-slate-700 mt-0.5 truncate">{summary.income}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Profession</div>
-                  <div className="text-sm font-medium text-slate-700 mt-0.5 truncate">{summary.profession}</div>
-                </div>
-                <div>
-                  <div className="text-xs text-slate-500">Location</div>
-                  <div className="text-sm font-medium text-slate-700 mt-0.5 truncate">{summary.location}</div>
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Holdings</div>
+                  <div className="text-lg font-semibold text-slate-800 mt-0.5">{summary.holdings_count}</div>
                 </div>
               </div>
             </section>
 
-            {/* Portfolio breakdown */}
+            {/* Portfolio Breakdown */}
             <section className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="flex items-baseline justify-between mb-4">
                 <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Portfolio Breakdown</div>
@@ -162,7 +182,7 @@ export default function Detail() {
                 <div className="text-sm text-slate-400 text-center py-6">No holdings</div>
               ) : (
                 <>
-                  {/* Desktop table */}
+                  {/* Tablet+ table */}
                   <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -224,34 +244,32 @@ export default function Detail() {
             </section>
 
             {/* Risk Alignment */}
-            <section className={`rounded-xl border p-5 sm:p-6 ${statusColor[risk_check.status] || 'bg-white border-slate-200'}`}>
+            <section className={`rounded-xl border p-5 sm:p-6 ${statusBg[risk_check.status] || statusBg.unknown}`}>
               <div className="text-xs uppercase tracking-wider font-semibold mb-2 opacity-70">Risk Alignment Check</div>
-              <div className="flex items-start gap-3">
-                <div className="text-sm flex-1">
-                  {risk_check.status === 'ok' || risk_check.status === 'aligned' ? (
-                    <div><span className="font-semibold">All holdings aligned</span> with client's {risk_check.client_risk} risk profile.</div>
-                  ) : risk_check.mismatches && risk_check.mismatches.length > 0 ? (
-                    <div>
-                      <div className="font-semibold mb-1">
-                        {risk_check.mismatches.length} holding{risk_check.mismatches.length > 1 ? 's' : ''} above client's {risk_check.client_risk} risk tolerance:
-                      </div>
-                      <ul className="space-y-1 text-sm">
-                        {risk_check.mismatches.map((m, i) => (
-                          <li key={i} className="opacity-90">
-                            • {m.product_name} ({m.product_risk}, +{m.gap} tier{m.gap > 1 ? 's' : ''})
-                          </li>
-                        ))}
-                      </ul>
+              <div className="text-sm">
+                {risk_check.status === 'aligned' ? (
+                  <div><span className="font-semibold">All holdings aligned</span> with client's <strong>{risk_check.client_risk}</strong> risk profile.</div>
+                ) : risk_check.mismatches && risk_check.mismatches.length > 0 ? (
+                  <div>
+                    <div className="font-semibold mb-1.5">
+                      {risk_check.mismatches.length} holding{risk_check.mismatches.length > 1 ? 's' : ''} above client's <strong>{risk_check.client_risk}</strong> risk tolerance:
                     </div>
-                  ) : (
-                    <div>Client risk profile: {risk_check.client_risk}</div>
-                  )}
-                </div>
+                    <ul className="space-y-1">
+                      {risk_check.mismatches.map((m, i) => (
+                        <li key={i} className="opacity-90">
+                          • {m.product_name} ({m.product_risk}, +{m.gap} tier{m.gap > 1 ? 's' : ''})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div>Client risk profile: {risk_check.client_risk}</div>
+                )}
               </div>
             </section>
           </div>
 
-          {/* RIGHT / Talking Points column (1/3 on desktop) */}
+          {/* RIGHT — Talking Points + AI button */}
           <aside className="space-y-4">
             <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -274,7 +292,7 @@ export default function Detail() {
 
             <div className="bg-gradient-to-br from-brand-50 to-emerald-50 rounded-xl border border-brand-200 p-5">
               <div className="text-xs uppercase tracking-wider text-brand-700 font-semibold mb-1">AI Assistant</div>
-              <div className="text-sm text-slate-600">Need product recommendations for this client? Open the chat assistant →</div>
+              <div className="text-sm text-slate-600">Need product recommendations for this client?</div>
               <button
                 onClick={() => setChatOpen(true)}
                 className="mt-3 w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2 rounded-lg transition"
@@ -316,20 +334,15 @@ export default function Detail() {
             </div>
             <div className="flex-1 bg-slate-50 flex items-center justify-center text-sm text-slate-400 p-6 text-center">
               {/*
-                TODO: Replace this placeholder with the Agent Studio chatbot iframe.
-                When real API is ready, paste the iframe embed script from Agent Studio,
-                appending &customer_id={customer_id} to data-bot-src so the agent knows
-                which client is in context.
-
-                Example:
+                TODO: When Agent C is deployed, replace this placeholder div with:
                 <iframe
-                  src={`https://agents.dyna.ai/botWeb?id=XXX&token=YYY&key=ZZZ&iframe=1&customer_id=${customer_id}`}
+                  src={`https://agents.dyna.ai/botWeb?id=AGENT_C_ID&token=TOKEN&key=KEY&iframe=1&customer_id=${customer_id}`}
                   className="w-full h-full border-0"
                 />
               */}
               <div>
                 <div className="font-medium text-slate-500 mb-2">Chatbot placeholder</div>
-                <div>When Agent C is deployed, the Agent Studio iframe embed will render here with customer_id={customer_id} pre-loaded as context.</div>
+                <div className="text-xs">When Agent C is live, the iframe will load here with customer_id pre-loaded as context.</div>
               </div>
             </div>
           </div>
