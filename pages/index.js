@@ -4,18 +4,25 @@ import Link from 'next/link';
 const fmt = (n) => '₱' + Number(n || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 });
 
 const FILTERS = [
-  { key: 'ALL',       label: 'All Clients',          color: 'slate' },
-  { key: 'GROWTH',    label: 'Growth Opportunity',   color: 'emerald' },
-  { key: 'REBALANCE', label: 'Rebalance Alert',      color: 'rose' },
-  { key: 'UPSELL',    label: 'Up-sell Opportunity',  color: 'violet' },
-  { key: 'CROSSSELL', label: 'Cross-sell Opportunity', color: 'amber' },
+  { key: 'ALL',       label: 'All Clients' },
+  { key: 'GROWTH',    label: 'Growth Opportunity' },
+  { key: 'REBALANCE', label: 'Rebalance Alert' },
+  { key: 'UPSELL',    label: 'Up-sell Opportunity' },
+  { key: 'CROSSSELL', label: 'Cross-sell Opportunity' },
 ];
 
-const TAG_STYLE = {
-  GROWTH:    'bg-emerald-100 text-emerald-700',
-  REBALANCE: 'bg-rose-100 text-rose-700',
-  UPSELL:    'bg-violet-100 text-violet-700',
-  CROSSSELL: 'bg-amber-100 text-amber-700',
+const TAG_PRIMARY = {
+  GROWTH:    'bg-emerald-600 text-white',
+  REBALANCE: 'bg-rose-600 text-white',
+  UPSELL:    'bg-violet-600 text-white',
+  CROSSSELL: 'bg-amber-600 text-white',
+};
+
+const TAG_MUTED = {
+  GROWTH:    'bg-emerald-50 text-emerald-600 border border-emerald-100',
+  REBALANCE: 'bg-rose-50 text-rose-600 border border-rose-100',
+  UPSELL:    'bg-violet-50 text-violet-600 border border-violet-100',
+  CROSSSELL: 'bg-amber-50 text-amber-600 border border-amber-100',
 };
 
 const TAG_SHORT = {
@@ -66,6 +73,16 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Sort hint */}
+        {!loading && filter !== 'ALL' && (
+          <div className="text-xs text-slate-500 mb-3 px-1">
+            {filter === 'GROWTH'    && 'Sorted by lowest AUM first — biggest income vs investment gap'}
+            {filter === 'REBALANCE' && 'Sorted by largest risk-tier mismatch first'}
+            {filter === 'UPSELL'    && 'Sorted by highest AUM first — most valuable single-product holders'}
+            {filter === 'CROSSSELL' && 'Sorted by highest AUM first — biggest cross-sell value'}
+          </div>
+        )}
+
         {loading && (
           <div className="bg-white rounded-lg p-8 text-center text-slate-400">Loading…</div>
         )}
@@ -79,7 +96,7 @@ export default function Home() {
             {data.clients.map(c => (
               <Link
                 key={c.customer_id}
-                href={`/detail?customer_id=${c.customer_id}`}
+                href={`/detail?customer_id=${c.customer_id}&from=${filter}`}
                 className="block bg-white rounded-lg border border-slate-200 hover:border-brand-400 hover:shadow-md transition p-4"
               >
                 <div className="flex items-center gap-4">
@@ -92,13 +109,25 @@ export default function Home() {
                       {c.age && <span className="text-xs text-slate-400">· age {c.age}</span>}
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
-                      {c.priority_flags.map(f => (
-                        <span key={f} className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${TAG_STYLE[f] || 'bg-slate-100 text-slate-600'}`}>
-                          {TAG_SHORT[f] || f}
-                        </span>
-                      ))}
+                      {c.priority_flags.map(f => {
+                        const isPrimary = filter !== 'ALL' && f === filter;
+                        return (
+                          <span
+                            key={f}
+                            className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                              isPrimary
+                                ? TAG_PRIMARY[f]
+                                : (filter === 'ALL' ? TAG_PRIMARY[f] : TAG_MUTED[f]) || 'bg-slate-100 text-slate-600'
+                            }`}
+                          >
+                            {TAG_SHORT[f] || f}
+                          </span>
+                        );
+                      })}
                     </div>
-                    <div className="text-xs text-slate-500 truncate mt-1">{c.ai_suggestion}</div>
+                    <div className="text-xs text-slate-600 mt-1.5 leading-snug">
+                      {c.contextual_suggestion || c.default_suggestion}
+                    </div>
                   </div>
                   <div className="text-right shrink-0">
                     <div className="font-semibold text-slate-900">{fmt(c.aum)}</div>

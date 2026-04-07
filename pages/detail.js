@@ -13,18 +13,18 @@ const riskBadgeColor = {
   'Aggressive':                'bg-rose-100 text-rose-700',
 };
 
-const tagStyle = {
-  GROWTH:    'bg-emerald-100 text-emerald-700',
-  REBALANCE: 'bg-rose-100 text-rose-700',
-  UPSELL:    'bg-violet-100 text-violet-700',
-  CROSSSELL: 'bg-amber-100 text-amber-700',
-};
-
 const statusBg = {
   aligned:  'bg-emerald-50 border-emerald-200 text-emerald-800',
   warning:  'bg-amber-50 border-amber-200 text-amber-800',
   mismatch: 'bg-rose-50 border-rose-200 text-rose-800',
   unknown:  'bg-slate-50 border-slate-200 text-slate-700',
+};
+
+const FROM_LABEL = {
+  GROWTH:    { label: 'Growth Opportunity',     dotColor: 'bg-emerald-500' },
+  UPSELL:    { label: 'Up-sell Opportunity',    dotColor: 'bg-violet-500' },
+  REBALANCE: { label: 'Rebalance Alert',        dotColor: 'bg-rose-500' },
+  CROSSSELL: { label: 'Cross-sell Opportunity', dotColor: 'bg-amber-500' },
 };
 
 const iconFor = (key) => {
@@ -56,7 +56,7 @@ const Field = ({ label, value }) => (
 
 export default function Detail() {
   const router = useRouter();
-  const { customer_id } = router.query;
+  const { customer_id, from } = router.query;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -66,14 +66,15 @@ export default function Detail() {
     if (!customer_id) return;
     setLoading(true);
     setError(null);
-    fetch(`/api/client-detail?customer_id=${customer_id}`)
+    const fromParam = from ? `&from=${from}` : '';
+    fetch(`/api/client-detail?customer_id=${customer_id}${fromParam}`)
       .then(r => {
         if (!r.ok) throw new Error('Not found');
         return r.json();
       })
       .then(d => { setData(d); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
-  }, [customer_id]);
+  }, [customer_id, from]);
 
   if (loading) {
     return (
@@ -94,7 +95,9 @@ export default function Detail() {
     );
   }
 
-  const { summary, portfolio, risk_check, talking_points, priority_flags, flag_labels } = data;
+  const { summary, portfolio, risk_check, talking_points, priority_flags, flag_labels, suggestions } = data;
+  const fromContext = from && FROM_LABEL[from] ? FROM_LABEL[from] : null;
+  const contextSuggestion = from && suggestions?.[from];
 
   return (
     <>
@@ -120,7 +123,12 @@ export default function Detail() {
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {priority_flags.map((f, i) => (
-                    <span key={f} className="text-[11px] px-2 py-1 bg-white text-brand-700 rounded-full font-medium">
+                    <span
+                      key={f}
+                      className={`text-[11px] px-2 py-1 rounded-full font-medium ${
+                        from === f ? 'bg-white text-brand-700 ring-2 ring-white/60' : 'bg-white/20 text-white border border-white/30'
+                      }`}
+                    >
                       {flag_labels[i]}
                     </span>
                   ))}
@@ -129,6 +137,23 @@ export default function Detail() {
             </div>
           </div>
         </header>
+
+        {/* Tab-context banner */}
+        {fromContext && contextSuggestion && (
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-2">
+            <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className={`w-2 h-2 rounded-full ${fromContext.dotColor} mt-1.5 shrink-0`} />
+                <div className="flex-1">
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold">
+                    Why this client is on your {fromContext.label} list
+                  </div>
+                  <div className="text-sm text-slate-800 mt-0.5">{contextSuggestion}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
           {/* LEFT — main column */}
@@ -278,15 +303,24 @@ export default function Detail() {
               </div>
 
               <div className="space-y-4">
-                {talking_points.map((p, i) => (
-                  <div key={i} className="border-l-2 border-brand-400 pl-4">
-                    <div className="flex items-center gap-2 text-brand-700 mb-1">
-                      {iconFor(p.icon)}
-                      <div className="font-semibold text-sm">{p.title}</div>
+                {talking_points.map((p, i) => {
+                  const isContextPoint = from && p.tag === from;
+                  return (
+                    <div
+                      key={i}
+                      className={`border-l-2 pl-4 ${isContextPoint ? 'border-brand-600' : 'border-brand-300'}`}
+                    >
+                      <div className="flex items-center gap-2 text-brand-700 mb-1">
+                        {iconFor(p.icon)}
+                        <div className="font-semibold text-sm">{p.title}</div>
+                        {isContextPoint && (
+                          <span className="text-[9px] uppercase tracking-wider bg-brand-100 text-brand-700 px-1.5 py-0.5 rounded font-bold">Focus</span>
+                        )}
+                      </div>
+                      <div className="text-sm text-slate-600 leading-relaxed">{p.body}</div>
                     </div>
-                    <div className="text-sm text-slate-600 leading-relaxed">{p.body}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
 
