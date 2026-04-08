@@ -144,8 +144,22 @@ export default function Detail() {
   const [chatOpen, setChatOpen] = useState(false);
 
   // Agent Studio chatbot URL (from the <script data-bot-src="..."> value).
-  // If token expires, replace this with the fresh embed URL from Agent Studio.
-  const CHATBOT_URL = 'https://agents.dyna.ai/botWeb?id=b3608c27dc2f624cd6985bb8eed6c0a2&token=MTc3NTYzNTc5OTU2MApEK0wrUUFNU0RGaVloTnRiVlJSdVh4NzYvTlU9&key=I4mK0VlMAYfbtokcD2ZCzdapUu8%253D&iframe=1';
+  // If token expires, replace the BASE with the fresh embed URL from Agent Studio.
+  //
+  // We append customer_id and sales_code as extra query parameters so that
+  // when Agent Studio adds support for URL-parameter context injection, the
+  // agent can read which client the RM is currently viewing. Until then,
+  // these extra parameters are harmless — they just sit in the URL unused.
+  //
+  // Ask your Agent Studio teammate to confirm:
+  //   1) Does botWeb pass extra URL params into the agent context?
+  //   2) If yes, what parameter name does it expect (customer_id? variables.customer_id?)
+  //   3) How should the agent use the customer_id to look up client data?
+  const CHATBOT_BASE = 'https://agents.dyna.ai/botWeb?id=b3608c27dc2f624cd6985bb8eed6c0a2&token=MTc3NTYzNTc5OTU2MApEK0wrUUFNU0RGaVloTnRiVlJSdVh4NzYvTlU9&key=I4mK0VlMAYfbtokcD2ZCzdapUu8%253D&iframe=1';
+
+  const chatbotUrl = customer_id
+    ? `${CHATBOT_BASE}&customer_id=${encodeURIComponent(customer_id)}${sales_code ? `&sales_code=${encodeURIComponent(sales_code)}` : ''}`
+    : CHATBOT_BASE;
 
   useEffect(() => {
     if (!customer_id) return;
@@ -473,10 +487,11 @@ export default function Detail() {
               </button>
             </div>
             <iframe
-              src={CHATBOT_URL}
+              src={chatbotUrl}
               title="AI Assistant"
               className="flex-1 w-full border-0"
               allow="clipboard-write; microphone"
+              key={customer_id}
             />
           </div>
         )}
