@@ -2087,18 +2087,15 @@
       "age": 31,
       "aum": 131804.34,
       "priority_flags": [
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
-        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 3 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 3 days \u2014 send a personal note this week",
+      "default_suggestion": "All 3 funds are Local \u2014 propose Global allocation",
       "holdings_count": 3,
       "max_gap": 0,
       "days_to_birthday": 3
@@ -3183,20 +3180,17 @@
       "aum": 3030.82,
       "priority_flags": [
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderately Conservative tolerance by +3 tiers",
-        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 6 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 6 days \u2014 send a personal note this week",
+      "default_suggestion": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderately Conservative tolerance by +3 tiers",
       "holdings_count": 2,
       "max_gap": 3,
       "days_to_birthday": 6
@@ -4268,20 +4262,17 @@
       "aum": 4166.54,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b14,167) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 3 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 3 days \u2014 send a personal note this week",
+      "default_suggestion": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b14,167) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 3
@@ -4707,22 +4698,19 @@
       "priority_flags": [
         "GROWTH",
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Growth Opportunity",
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "GROWTH": "Income \u20b15,000,001 - 10,000,000 but only \u20b13,057 invested \u2014 clear growth opportunity",
         "UPSELL": "Holds only ATRAM Corporate Bond Fund, Inc. (\u20b13,057) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 6 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 6 days \u2014 send a personal note this week",
+      "default_suggestion": "Income \u20b15,000,001 - 10,000,000 but only \u20b13,057 invested \u2014 clear growth opportunity",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 6
@@ -6467,20 +6455,17 @@
       "aum": 3799.94,
       "priority_flags": [
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "REBALANCE": "ATRAM Philippine Equity Opportunity (Aggressive) exceeds Moderately Conservative tolerance by +3 tiers",
-        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 2 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 2 days \u2014 send a personal note this week",
+      "default_suggestion": "ATRAM Philippine Equity Opportunity (Aggressive) exceeds Moderately Conservative tolerance by +3 tiers",
       "holdings_count": 2,
       "max_gap": 3,
       "days_to_birthday": 2
@@ -7580,20 +7565,17 @@
       "aum": 3808.14,
       "priority_flags": [
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "REBALANCE": "ATRAM Philippine Equity Opportunity (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 2 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 2 days \u2014 send a personal note this week",
+      "default_suggestion": "ATRAM Philippine Equity Opportunity (Aggressive) exceeds Moderate tolerance by +2 tiers",
       "holdings_count": 3,
       "max_gap": 2,
       "days_to_birthday": 2
@@ -8014,20 +7996,17 @@
       "aum": 36393.82,
       "priority_flags": [
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday tomorrow \u2014 reach out for a personal touch"
+        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday tomorrow \u2014 reach out for a personal touch",
+      "default_suggestion": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
       "holdings_count": 2,
       "max_gap": 2,
       "days_to_birthday": 1
@@ -8455,24 +8434,21 @@
         "GROWTH",
         "UPSELL",
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Growth Opportunity",
         "Up-sell Opportunity",
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "GROWTH": "Income \u20b15,000,001 - 10,000,000 but only \u20b125,620 invested \u2014 clear growth opportunity",
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b125,620) \u2014 add complementary fund",
         "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday is today \u2014 perfect outreach moment"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday is today \u2014 perfect outreach moment",
+      "default_suggestion": "Income \u20b15,000,001 - 10,000,000 but only \u20b125,620 invested \u2014 clear growth opportunity",
       "holdings_count": 1,
       "max_gap": 2,
       "days_to_birthday": 0
@@ -9406,18 +9382,15 @@
       "age": 30,
       "aum": 204934.54,
       "priority_flags": [
-        "REBALANCE",
-        "BIRTHDAY"
+        "REBALANCE"
       ],
       "flag_labels": [
-        "Rebalance Alert",
-        "Birthday This Week"
+        "Rebalance Alert"
       ],
       "suggestions": {
-        "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "BIRTHDAY": "Birthday in 4 days \u2014 send a personal note this week"
+        "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers"
       },
-      "default_suggestion": "Birthday in 4 days \u2014 send a personal note this week",
+      "default_suggestion": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
       "holdings_count": 2,
       "max_gap": 2,
       "days_to_birthday": 4
@@ -11046,20 +11019,17 @@
       "aum": 2003.71,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b12,004) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 3 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 3 days \u2014 send a personal note this week",
+      "default_suggestion": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b12,004) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 3
@@ -11773,18 +11743,15 @@
       "age": 40,
       "aum": 3641.76,
       "priority_flags": [
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
-        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 5 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 5 days \u2014 send a personal note this week",
+      "default_suggestion": "All 2 funds are Local \u2014 propose Global allocation",
       "holdings_count": 2,
       "max_gap": 0,
       "days_to_birthday": 5
@@ -12480,20 +12447,17 @@
       "aum": 1675.1,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b11,675) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday is today \u2014 perfect outreach moment"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday is today \u2014 perfect outreach moment",
+      "default_suggestion": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b11,675) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 0
@@ -13292,18 +13256,15 @@
       "age": 33,
       "aum": 10665.44,
       "priority_flags": [
-        "REBALANCE",
-        "BIRTHDAY"
+        "REBALANCE"
       ],
       "flag_labels": [
-        "Rebalance Alert",
-        "Birthday This Week"
+        "Rebalance Alert"
       ],
       "suggestions": {
-        "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "BIRTHDAY": "Birthday is today \u2014 perfect outreach moment"
+        "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers"
       },
-      "default_suggestion": "Birthday is today \u2014 perfect outreach moment",
+      "default_suggestion": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
       "holdings_count": 3,
       "max_gap": 2,
       "days_to_birthday": 0
@@ -14118,20 +14079,17 @@
       "aum": 58080.21,
       "priority_flags": [
         "GROWTH",
-        "REBALANCE",
-        "BIRTHDAY"
+        "REBALANCE"
       ],
       "flag_labels": [
         "Growth Opportunity",
-        "Rebalance Alert",
-        "Birthday This Week"
+        "Rebalance Alert"
       ],
       "suggestions": {
         "GROWTH": "Income \u20b15,000,001 - 10,000,000 but only \u20b158,080 invested \u2014 clear growth opportunity",
-        "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "BIRTHDAY": "Birthday in 2 days \u2014 send a personal note this week"
+        "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers"
       },
-      "default_suggestion": "Birthday in 2 days \u2014 send a personal note this week",
+      "default_suggestion": "Income \u20b15,000,001 - 10,000,000 but only \u20b158,080 invested \u2014 clear growth opportunity",
       "holdings_count": 7,
       "max_gap": 2,
       "days_to_birthday": 2
@@ -15911,20 +15869,17 @@
       "aum": 172886.31,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b1172,886) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 4 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 4 days \u2014 send a personal note this week",
+      "default_suggestion": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b1172,886) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 4
@@ -16622,20 +16577,17 @@
       "aum": 931.22,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b1931) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 6 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 6 days \u2014 send a personal note this week",
+      "default_suggestion": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b1931) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 6
@@ -17283,20 +17235,17 @@
       "aum": 8038.66,
       "priority_flags": [
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "REBALANCE": "ATRAM Philippine Equity Opportunity (Aggressive) exceeds Moderately Conservative tolerance by +3 tiers",
-        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 6 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 6 days \u2014 send a personal note this week",
+      "default_suggestion": "ATRAM Philippine Equity Opportunity (Aggressive) exceeds Moderately Conservative tolerance by +3 tiers",
       "holdings_count": 2,
       "max_gap": 3,
       "days_to_birthday": 6
@@ -17703,20 +17652,17 @@
       "aum": 2773.82,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Philippine Balanced Fund, Inc. (\u20b12,774) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 2 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 2 days \u2014 send a personal note this week",
+      "default_suggestion": "Holds only ATRAM Philippine Balanced Fund, Inc. (\u20b12,774) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 2
@@ -17770,16 +17716,10 @@
       "avatar_initials": "HQ",
       "age": 45,
       "aum": 1706.61,
-      "priority_flags": [
-        "BIRTHDAY"
-      ],
-      "flag_labels": [
-        "Birthday This Week"
-      ],
-      "suggestions": {
-        "BIRTHDAY": "Birthday in 5 days \u2014 send a personal note this week"
-      },
-      "default_suggestion": "Birthday in 5 days \u2014 send a personal note this week",
+      "priority_flags": [],
+      "flag_labels": [],
+      "suggestions": {},
+      "default_suggestion": "Healthy profile \u2014 maintain engagement",
       "holdings_count": 2,
       "max_gap": 0,
       "days_to_birthday": 5
@@ -17887,20 +17827,17 @@
       "aum": 15399.09,
       "priority_flags": [
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 3 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 2 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 3 days \u2014 send a personal note this week",
+      "default_suggestion": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
       "holdings_count": 2,
       "max_gap": 2,
       "days_to_birthday": 3
@@ -18463,20 +18400,17 @@
       "aum": 9811.46,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b19,811) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday tomorrow \u2014 reach out for a personal touch"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday tomorrow \u2014 reach out for a personal touch",
+      "default_suggestion": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b19,811) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 1
@@ -19767,20 +19701,17 @@
       "aum": 8600.74,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b18,601) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday is today \u2014 perfect outreach moment"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday is today \u2014 perfect outreach moment",
+      "default_suggestion": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b18,601) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 0
@@ -19863,22 +19794,19 @@
       "priority_flags": [
         "UPSELL",
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b114,321) \u2014 add complementary fund",
         "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 3 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 3 days \u2014 send a personal note this week",
+      "default_suggestion": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b114,321) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 2,
       "days_to_birthday": 3
@@ -22934,20 +22862,17 @@
       "aum": 1.49,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b11) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday tomorrow \u2014 reach out for a personal touch"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday tomorrow \u2014 reach out for a personal touch",
+      "default_suggestion": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b11) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 1
@@ -24049,18 +23974,15 @@
       "age": 39,
       "aum": 3117.65,
       "priority_flags": [
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
-        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 5 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 5 days \u2014 send a personal note this week",
+      "default_suggestion": "All 3 funds are Local \u2014 propose Global allocation",
       "holdings_count": 3,
       "max_gap": 0,
       "days_to_birthday": 5
@@ -25514,24 +25436,21 @@
         "GROWTH",
         "UPSELL",
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Growth Opportunity",
         "Up-sell Opportunity",
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "GROWTH": "Income \u20b15,000,001 - 10,000,000 but only \u20b118,379 invested \u2014 clear growth opportunity",
         "UPSELL": "Holds only ATRAM Alpha Opportunity Fund, Inc. (\u20b118,379) \u2014 add complementary fund",
         "REBALANCE": "ATRAM Alpha Opportunity Fund, Inc. (Aggressive) exceeds Moderately Conservative tolerance by +3 tiers",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 4 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 4 days \u2014 send a personal note this week",
+      "default_suggestion": "Income \u20b15,000,001 - 10,000,000 but only \u20b118,379 invested \u2014 clear growth opportunity",
       "holdings_count": 1,
       "max_gap": 3,
       "days_to_birthday": 4
@@ -27435,20 +27354,17 @@
       "aum": 708.56,
       "priority_flags": [
         "UPSELL",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b1709) \u2014 add complementary fund",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 7 days \u2014 send a personal note this week"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 7 days \u2014 send a personal note this week",
+      "default_suggestion": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b1709) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 0,
       "days_to_birthday": 7
@@ -27597,22 +27513,19 @@
       "priority_flags": [
         "UPSELL",
         "REBALANCE",
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
         "Up-sell Opportunity",
         "Rebalance Alert",
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
         "UPSELL": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b128,040) \u2014 add complementary fund",
         "REBALANCE": "ATRAM Philippine Equity Opportunity (Aggressive) exceeds Moderate tolerance by +2 tiers",
-        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday is today \u2014 perfect outreach moment"
+        "CROSSSELL": "Sole holding is a Local fund \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday is today \u2014 perfect outreach moment",
+      "default_suggestion": "Holds only ATRAM Philippine Equity Opportunity Fund (\u20b128,040) \u2014 add complementary fund",
       "holdings_count": 1,
       "max_gap": 2,
       "days_to_birthday": 0
@@ -29044,18 +28957,15 @@
       "age": 40,
       "aum": 31290.24,
       "priority_flags": [
-        "CROSSSELL",
-        "BIRTHDAY"
+        "CROSSSELL"
       ],
       "flag_labels": [
-        "Cross-sell Opportunity",
-        "Birthday This Week"
+        "Cross-sell Opportunity"
       ],
       "suggestions": {
-        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation",
-        "BIRTHDAY": "Birthday in 5 days \u2014 send a personal note this week"
+        "CROSSSELL": "All 3 funds are Local \u2014 propose Global allocation"
       },
-      "default_suggestion": "Birthday in 5 days \u2014 send a personal note this week",
+      "default_suggestion": "All 3 funds are Local \u2014 propose Global allocation",
       "holdings_count": 3,
       "max_gap": 0,
       "days_to_birthday": 5
