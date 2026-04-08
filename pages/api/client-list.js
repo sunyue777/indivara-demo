@@ -19,6 +19,14 @@ export default async function handler(req, res) {
       page,
       pageSize,
     });
+
+    if (data.error) {
+      return res.status(400).json(data);
+    }
+
+    // Allow Indivara to call this from their frontend
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cache-Control', 'public, s-maxage=60');
     res.status(200).json(data);
   } catch (err) {
     console.error(err);
