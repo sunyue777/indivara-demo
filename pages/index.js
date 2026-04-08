@@ -174,7 +174,7 @@ export default function Home() {
               onClick={() => setFilter(f.key)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
                 filter === f.key
-                  ? 'bg-brand-400 text-white shadow'
+                  ? 'bg-brand-700 text-white shadow'
                   : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-400'
               }`}
             >
@@ -277,7 +277,7 @@ export default function Home() {
                       onClick={() => setPage(p)}
                       className={`min-w-[36px] px-3 py-1.5 text-sm rounded-lg border ${
                         p === page
-                          ? 'bg-brand-400 text-white border-brand-400'
+                          ? 'bg-brand-700 text-white border-brand-700'
                           : 'bg-white text-slate-600 border-slate-200 hover:border-brand-400'
                       }`}
                     >{p}</button>

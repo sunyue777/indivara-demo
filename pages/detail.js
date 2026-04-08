@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
-import Script from 'next/script';
 
 const fmt = (n) => '₱' + Number(n || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 });
 const fmtPct = (n) => Number(n || 0).toFixed(1) + '%';
@@ -37,9 +36,9 @@ const FROM_LABEL = {
 };
 
 const DONUT_COLORS = [
-  '#3DBFD4', '#22a8c0', '#1c8aa1', '#1b6f82', '#a3e9f2',
-  '#6dd7e6', '#1c5b6b', '#10b981', '#34d399', '#6ee7b7',
-  '#a7f3d0', '#0d9488', '#14b8a6', '#5eead4', '#1849a3',
+  '#1e40af', '#2563eb', '#3b82f6', '#60a5fa', '#93c5fd',
+  '#1d4ed8', '#1e3a8a', '#0891b2', '#0e7490', '#0284c7',
+  '#0369a1', '#075985', '#0c4a6e', '#155e75', '#164e63',
 ];
 
 const iconFor = (key) => {
@@ -157,6 +156,42 @@ export default function Detail() {
       .catch(e => { setError(e.message); setLoading(false); });
   }, [customer_id, from]);
 
+  // ------------------------------------------------------------
+  // Load Agent Studio chatbot iframe (bottom-right floating button)
+  // We inject the script tag manually so that all data-* attributes
+  // are preserved exactly as the copy-paste embed from Agent Studio.
+  // ------------------------------------------------------------
+  useEffect(() => {
+    // Don't load if script is already present
+    if (document.getElementById('chatbot-iframe')) return;
+
+    const script = document.createElement('script');
+    script.id = 'chatbot-iframe';
+    script.src = 'https://agents.dyna.ai/assets/js/iframe.js';
+    script.defer = true;
+    script.setAttribute(
+      'data-bot-src',
+      'https://agents.dyna.ai/botWeb?id=b3608c27dc2f624cd6985bb8eed6c0a2&token=MTc3NTYzNTc5OTU2MApEK0wrUUFNU0RGaVloTnRiVlJSdVh4NzYvTlU9&key=I4mK0VlMAYfbtokcD2ZCzdapUu8%253D&iframe=1'
+    );
+    script.setAttribute('data-default-open', 'false');
+    script.setAttribute('data-drag', 'true');
+
+    document.body.appendChild(script);
+
+    // Cleanup on page unmount so the chatbot doesn't leak onto other pages
+    return () => {
+      const existing = document.getElementById('chatbot-iframe');
+      if (existing) existing.remove();
+      // Also remove the iframe wrapper injected by the script
+      const injected = document.querySelectorAll(
+        '[id^="chat-box"], [class*="chatbot"], [class*="dyna-"], [class*="iframe-"]'
+      );
+      injected.forEach(el => {
+        if (el.id !== 'chatbot-iframe') el.remove();
+      });
+    };
+  }, []);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -193,16 +228,6 @@ export default function Detail() {
         <title>{summary.name} — Client Brief</title>
       </Head>
 
-      {/* Agent Studio chatbot iframe — only loads on detail page */}
-      <Script
-        id="chatbot-iframe"
-        src="https://agents.dyna.ai/assets/js/iframe.js"
-        data-bot-src="https://agents.dyna.ai/botWeb?id=89d8fb9686b35bbed87233a14b2d2d45&token=MTc3NTUzMjg0NzgyMApOSmxjNm4vUGU1dkI0ck5CdXlqV2Q0d1JxTFk9&key=LKqt%252FiLmIHI03gvZVug9Bam9VsA%253D&iframe=1"
-        data-default-open="false"
-        data-drag="true"
-        strategy="afterInteractive"
-      />
-
       <div className="min-h-screen bg-white pb-24">
         {/* Back bar */}
         <div className="bg-white border-b border-slate-200">
@@ -223,7 +248,7 @@ export default function Detail() {
         <header className="bg-bannerBg">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white flex items-center justify-center text-xl sm:text-2xl font-bold shrink-0 border-2 border-brand-400 text-brand-700">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white flex items-center justify-center text-xl sm:text-2xl font-bold shrink-0 border-2 border-brand-700 text-brand-800">
                 {summary.avatar_initials}
               </div>
               <div className="flex-1 min-w-0">
@@ -246,7 +271,7 @@ export default function Detail() {
                     <span
                       key={f}
                       className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${
-                        from === f ? 'bg-brand-400 text-white' : 'bg-white text-slate-700 border border-slate-200'
+                        from === f ? 'bg-brand-700 text-white' : 'bg-white text-slate-700 border border-slate-200'
                       }`}
                     >
                       {flag_labels[i]}
@@ -412,7 +437,7 @@ export default function Detail() {
           <aside className="space-y-4">
             <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded bg-brand-400 text-white flex items-center justify-center text-xs font-bold">AI</div>
+                <div className="w-6 h-6 rounded bg-brand-700 text-white flex items-center justify-center text-xs font-bold">AI</div>
                 <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Talking Points</div>
               </div>
 
@@ -422,7 +447,7 @@ export default function Detail() {
                   return (
                     <div
                       key={i}
-                      className={`border-l-2 pl-4 ${isContextPoint ? 'border-brand-500' : 'border-brand-200'}`}
+                      className={`border-l-2 pl-4 ${isContextPoint ? 'border-brand-700' : 'border-brand-200'}`}
                     >
                       <div className="flex items-center gap-2 text-brand-700 mb-1">
                         {iconFor(p.icon)}
