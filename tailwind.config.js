@@ -7,26 +7,26 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        // Indivara brand palette
+        // Indivara deep-blue brand palette (matches Avantrade mobile UI)
         brand: {
-          50:  '#ecfbfd',
-          100: '#d0f4f9',
-          200: '#a3e9f2',
-          300: '#6dd7e6',
-          400: '#3DBFD4', // primary cyan-blue
-          500: '#22a8c0',
-          600: '#1c8aa1',
-          700: '#1b6f82',
-          800: '#1c5b6b',
-          900: '#1b4b58',
+          50:  '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb', // primary buttons
+          700: '#1d4ed8',
+          800: '#1e40af', // headers / banners
+          900: '#1e3a8a', // deepest accent
         },
         accent: {
-          // Deep blue for buttons
-          500: '#2D7CE6',
-          600: '#1E5BC6',
-          700: '#1849a3',
+          500: '#2563eb',
+          600: '#1d4ed8',
+          700: '#1e40af',
         },
-        bannerBg: '#D8F0F5', // Indivara light banner blue
+        // Light banner background for page headers
+        bannerBg: '#eff6ff',
       },
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
