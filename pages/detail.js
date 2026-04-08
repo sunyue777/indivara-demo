@@ -22,13 +22,13 @@ const statusBg = {
 };
 
 const FROM_LABEL = {
-  GROWTH:    { label: 'Growth Opportunity',     dotColor: 'bg-emerald-500', accent: 'border-l-emerald-500' },
-  UPSELL:    { label: 'Up-sell Opportunity',    dotColor: 'bg-violet-500',  accent: 'border-l-violet-500' },
-  REBALANCE: { label: 'Rebalance Alert',        dotColor: 'bg-rose-500',    accent: 'border-l-rose-500' },
-  CROSSSELL: { label: 'Cross-sell Opportunity', dotColor: 'bg-amber-500',   accent: 'border-l-amber-500' },
+  GROWTH:    { label: 'Growth Opportunity',     accent: 'border-l-emerald-500' },
+  UPSELL:    { label: 'Up-sell Opportunity',    accent: 'border-l-violet-500' },
+  REBALANCE: { label: 'Rebalance Alert',        accent: 'border-l-rose-500' },
+  CROSSSELL: { label: 'Cross-sell Opportunity', accent: 'border-l-amber-500' },
+  BIRTHDAY:  { label: 'Birthday This Week',     accent: 'border-l-pink-500' },
 };
 
-// Color palette for donut chart slices (cycles if more holdings than colors)
 const DONUT_COLORS = [
   '#0891b2', '#06b6d4', '#22d3ee', '#67e8f9', '#a5f3fc',
   '#0e7490', '#155e75', '#164e63', '#10b981', '#34d399',
@@ -62,7 +62,6 @@ const Field = ({ label, value }) => (
   </div>
 );
 
-// Donut chart SVG built from scratch — no library needed
 function DonutChart({ data, size = 180 }) {
   if (!data || data.length === 0) return null;
   const total = data.reduce((s, d) => s + d.value, 0);
@@ -90,7 +89,6 @@ function DonutChart({ data, size = 180 }) {
 
     const largeArc = endAngle - startAngle > Math.PI ? 1 : 0;
 
-    // Edge case: single slice (full circle) — draw two halves
     let d_path;
     if (data.length === 1) {
       d_path = `
@@ -187,26 +185,17 @@ export default function Detail() {
     );
   }
 
-  const { summary, portfolio, risk_check, talking_points, priority_flags, flag_labels, suggestions, banners } = data;
+  const { summary, portfolio, risk_check, talking_points, priority_flags, flag_labels, banners } = data;
   const fromContext = from && FROM_LABEL[from] ? FROM_LABEL[from] : null;
   const personalBanner = from && banners?.[from];
 
-  // Sort portfolio by % AUM desc
   const sortedPortfolio = [...portfolio].sort((a, b) => (b.pct_of_aum || 0) - (a.pct_of_aum || 0));
-
-  // Donut data
-  const donutData = sortedPortfolio.map(h => ({
-    label: h.product_name,
-    value: h.value || 0,
-  }));
-
+  const donutData = sortedPortfolio.map(h => ({ label: h.product_name, value: h.value || 0 }));
   const backHref = from ? `/?filter=${from}` : '/';
 
   return (
     <>
-      <Head>
-        <title>{summary.name} — Client Brief</title>
-      </Head>
+      <Head><title>{summary.name} — Client Brief</title></Head>
 
       <div className="min-h-screen bg-slate-50 pb-24">
         {/* Back bar */}
@@ -247,7 +236,7 @@ export default function Detail() {
                         from === f ? 'bg-white text-brand-700 ring-2 ring-white/60' : 'bg-white/20 text-white border border-white/30'
                       }`}
                     >
-                      {flag_labels[i]}
+                      {f === 'BIRTHDAY' && '🎂 '}{flag_labels[i]}
                     </span>
                   ))}
                 </div>
@@ -269,10 +258,8 @@ export default function Detail() {
         )}
 
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-5 lg:grid lg:grid-cols-3 lg:gap-6 lg:space-y-0">
-          {/* LEFT — main column */}
           <div className="lg:col-span-2 space-y-5">
 
-            {/* About Client */}
             <section className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-4">About Client</div>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -282,7 +269,6 @@ export default function Detail() {
               </div>
             </section>
 
-            {/* Wealth Profile */}
             <section className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-4">Wealth Profile</div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -309,7 +295,6 @@ export default function Detail() {
               </div>
             </section>
 
-            {/* Portfolio Breakdown */}
             <section className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="flex items-baseline justify-between mb-4">
                 <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Portfolio Breakdown</div>
@@ -320,14 +305,12 @@ export default function Detail() {
                 <div className="text-sm text-slate-400 text-center py-6">No holdings</div>
               ) : (
                 <>
-                  {/* Donut chart — only show if 2+ holdings */}
                   {sortedPortfolio.length >= 2 && (
                     <div className="mb-6 pb-6 border-b border-slate-100">
                       <DonutChart data={donutData} size={180} />
                     </div>
                   )}
 
-                  {/* Tablet+ table */}
                   <div className="hidden sm:block overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -361,7 +344,6 @@ export default function Detail() {
                     </table>
                   </div>
 
-                  {/* Mobile cards */}
                   <div className="sm:hidden space-y-3">
                     {sortedPortfolio.map((h, i) => (
                       <div key={i} className="border border-slate-100 rounded-lg p-3">
@@ -388,7 +370,6 @@ export default function Detail() {
               )}
             </section>
 
-            {/* Risk Alignment */}
             <section className={`rounded-xl border p-5 sm:p-6 ${statusBg[risk_check.status] || statusBg.unknown}`}>
               <div className="text-xs uppercase tracking-wider font-semibold mb-2 opacity-70">Risk Alignment Check</div>
               <div className="text-sm">
@@ -414,7 +395,6 @@ export default function Detail() {
             </section>
           </div>
 
-          {/* RIGHT — Talking Points + AI button */}
           <aside className="space-y-4">
             <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
@@ -457,7 +437,6 @@ export default function Detail() {
           </aside>
         </main>
 
-        {/* Chatbot floating button */}
         {!chatOpen && (
           <button
             onClick={() => setChatOpen(true)}
@@ -470,7 +449,6 @@ export default function Detail() {
           </button>
         )}
 
-        {/* Chatbot panel */}
         {chatOpen && (
           <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] bg-white sm:rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50">
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-brand-700 to-brand-500 text-white sm:rounded-t-2xl">

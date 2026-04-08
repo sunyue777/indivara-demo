@@ -9,14 +9,7 @@ const FILTERS = [
   { key: 'UPSELL',    label: 'Up-sell Opportunity' },
   { key: 'REBALANCE', label: 'Rebalance Alert' },
   { key: 'CROSSSELL', label: 'Cross-sell Opportunity' },
-];
-
-const SORT_OPTIONS = [
-  { key: 'default',       label: 'Default (smart)' },
-  { key: 'aum_desc',      label: 'AUM: high → low' },
-  { key: 'aum_asc',       label: 'AUM: low → high' },
-  { key: 'holdings_desc', label: 'Holdings: most → fewest' },
-  { key: 'holdings_asc',  label: 'Holdings: fewest → most' },
+  { key: 'BIRTHDAY',  label: '🎂 Birthday This Week' },
 ];
 
 const TAG_PRIMARY = {
@@ -24,6 +17,7 @@ const TAG_PRIMARY = {
   REBALANCE: 'bg-rose-600 text-white',
   UPSELL:    'bg-violet-600 text-white',
   CROSSSELL: 'bg-amber-600 text-white',
+  BIRTHDAY:  'bg-pink-600 text-white',
 };
 
 const TAG_MUTED = {
@@ -31,6 +25,7 @@ const TAG_MUTED = {
   REBALANCE: 'bg-rose-50 text-rose-600 border border-rose-100',
   UPSELL:    'bg-violet-50 text-violet-600 border border-violet-100',
   CROSSSELL: 'bg-amber-50 text-amber-600 border border-amber-100',
+  BIRTHDAY:  'bg-pink-50 text-pink-600 border border-pink-100',
 };
 
 const TAG_SHORT = {
@@ -38,31 +33,77 @@ const TAG_SHORT = {
   REBALANCE: 'Rebalance',
   UPSELL: 'Up-sell',
   CROSSSELL: 'Cross-sell',
+  BIRTHDAY: '🎂 Birthday',
 };
 
 const PAGE_SIZE = 20;
 
+// 3-state cycle: none → desc → asc → none
+const cycleSort = (current) => {
+  if (current === 'none') return 'desc';
+  if (current === 'desc') return 'asc';
+  return 'none';
+};
+
+const SortButton = ({ label, value, onClick }) => {
+  const active = value !== 'none';
+  return (
+    <button
+      onClick={onClick}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
+        active
+          ? 'bg-brand-600 text-white border-brand-600'
+          : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300'
+      }`}
+    >
+      {label}
+      {value === 'desc' && <span className="text-xs">↓</span>}
+      {value === 'asc' && <span className="text-xs">↑</span>}
+    </button>
+  );
+};
+
 export default function Home() {
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('ALL');
-  const [sort, setSort] = useState('default');
+  const [sortAum, setSortAum] = useState('none');
+  const [sortHoldings, setSortHoldings] = useState('none');
+  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
+  // Debounce search input → search
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput.trim()), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
+
   useEffect(() => {
     setLoading(true);
-    fetch(`/api/client-list?sales_code=RAMPVERIMG&priority_filter=${filter}&sort=${sort}&page=${page}&page_size=${PAGE_SIZE}`)
+    const params = new URLSearchParams({
+      sales_code: 'RAMPVERIMG',
+      priority_filter: filter,
+      sort_aum: sortAum,
+      sort_holdings: sortHoldings,
+      search,
+      page: String(page),
+      page_size: String(PAGE_SIZE),
+    });
+    fetch(`/api/client-list?${params}`)
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [filter, sort, page]);
+  }, [filter, sortAum, sortHoldings, search, page]);
 
-  // Reset to page 1 when filter or sort changes
-  useEffect(() => { setPage(1); }, [filter, sort]);
+  // Reset to page 1 when filter / sort / search changes
+  useEffect(() => { setPage(1); }, [filter, sortAum, sortHoldings, search]);
 
   const totalPages = data?.total_pages || 1;
-  const showingStart = data ? (data.page - 1) * data.page_size + 1 : 0;
+  const showingStart = data && data.total > 0 ? (data.page - 1) * data.page_size + 1 : 0;
   const showingEnd = data ? Math.min(data.page * data.page_size, data.total) : 0;
+
+  const clearSorts = () => { setSortAum('none'); setSortHoldings('none'); };
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -74,6 +115,33 @@ export default function Home() {
       </header>
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Search bar */}
+        <div className="mb-4">
+          <div className="relative">
+            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <input
+              type="text"
+              placeholder="Search by name or initials…"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-9 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400"
+            />
+            {searchInput && (
+              <button
+                onClick={() => setSearchInput('')}
+                aria-label="Clear search"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            )}
+          </div>
+        </div>
+
         {/* Filter tabs */}
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
           {FILTERS.map(f => (
@@ -91,24 +159,27 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Sort + result count row */}
+        {/* Sort controls + result count */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="text-xs text-slate-500">
             {!loading && data && (
-              <>Showing <span className="font-medium text-slate-700">{showingStart}–{showingEnd}</span> of <span className="font-medium text-slate-700">{data.total}</span></>
+              data.total === 0
+                ? <>No clients match</>
+                : <>Showing <span className="font-medium text-slate-700">{showingStart}–{showingEnd}</span> of <span className="font-medium text-slate-700">{data.total}</span></>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <label className="text-xs text-slate-500">Sort by:</label>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="text-sm bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400"
-            >
-              {SORT_OPTIONS.map(o => (
-                <option key={o.key} value={o.key}>{o.label}</option>
-              ))}
-            </select>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-slate-500">Sort:</span>
+            <SortButton label="AUM" value={sortAum} onClick={() => setSortAum(cycleSort(sortAum))} />
+            <SortButton label="Holdings" value={sortHoldings} onClick={() => setSortHoldings(cycleSort(sortHoldings))} />
+            {(sortAum !== 'none' || sortHoldings !== 'none') && (
+              <button
+                onClick={clearSorts}
+                className="text-xs text-slate-400 hover:text-slate-600 underline"
+              >
+                clear
+              </button>
+            )}
           </div>
         </div>
 
@@ -179,7 +250,6 @@ export default function Home() {
                   ← Prev
                 </button>
 
-                {/* Page number buttons */}
                 {getPageNumbers(page, totalPages).map((p, i) => (
                   p === '...' ? (
                     <span key={i} className="px-2 text-slate-400">…</span>
@@ -215,7 +285,6 @@ export default function Home() {
 }
 
 function getPageNumbers(current, total) {
-  // Compact pagination: 1 ... 4 5 6 ... 20
   if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
   const pages = [];
   pages.push(1);
