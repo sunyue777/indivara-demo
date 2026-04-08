@@ -141,6 +141,11 @@ export default function Detail() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [chatOpen, setChatOpen] = useState(false);
+
+  // Agent Studio chatbot URL (from the <script data-bot-src="..."> value).
+  // If token expires, replace this with the fresh embed URL from Agent Studio.
+  const CHATBOT_URL = 'https://agents.dyna.ai/botWeb?id=b3608c27dc2f624cd6985bb8eed6c0a2&token=MTc3NTYzNTc5OTU2MApEK0wrUUFNU0RGaVloTnRiVlJSdVh4NzYvTlU9&key=I4mK0VlMAYfbtokcD2ZCzdapUu8%253D&iframe=1';
 
   useEffect(() => {
     if (!customer_id) return;
@@ -155,42 +160,6 @@ export default function Detail() {
       .then(d => { setData(d); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
   }, [customer_id, from]);
-
-  // ------------------------------------------------------------
-  // Load Agent Studio chatbot iframe (bottom-right floating button)
-  // We inject the script tag manually so that all data-* attributes
-  // are preserved exactly as the copy-paste embed from Agent Studio.
-  // ------------------------------------------------------------
-  useEffect(() => {
-    // Don't load if script is already present
-    if (document.getElementById('chatbot-iframe')) return;
-
-    const script = document.createElement('script');
-    script.id = 'chatbot-iframe';
-    script.src = 'https://agents.dyna.ai/assets/js/iframe.js';
-    script.defer = true;
-    script.setAttribute(
-      'data-bot-src',
-      'https://agents.dyna.ai/botWeb?id=b3608c27dc2f624cd6985bb8eed6c0a2&token=MTc3NTYzNTc5OTU2MApEK0wrUUFNU0RGaVloTnRiVlJSdVh4NzYvTlU9&key=I4mK0VlMAYfbtokcD2ZCzdapUu8%253D&iframe=1'
-    );
-    script.setAttribute('data-default-open', 'false');
-    script.setAttribute('data-drag', 'true');
-
-    document.body.appendChild(script);
-
-    // Cleanup on page unmount so the chatbot doesn't leak onto other pages
-    return () => {
-      const existing = document.getElementById('chatbot-iframe');
-      if (existing) existing.remove();
-      // Also remove the iframe wrapper injected by the script
-      const injected = document.querySelectorAll(
-        '[id^="chat-box"], [class*="chatbot"], [class*="dyna-"], [class*="iframe-"]'
-      );
-      injected.forEach(el => {
-        if (el.id !== 'chatbot-iframe') el.remove();
-      });
-    };
-  }, []);
 
   if (loading) {
     return (
@@ -471,6 +440,46 @@ export default function Detail() {
             </div>
           </aside>
         </main>
+
+        {/* ================================================================ */}
+        {/* Chatbot floating button (always visible on detail pages)          */}
+        {/* ================================================================ */}
+        {!chatOpen && (
+          <button
+            onClick={() => setChatOpen(true)}
+            aria-label="Open AI Assistant"
+            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-700 hover:bg-brand-800 text-white shadow-lg flex items-center justify-center transition z-40"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
+            </svg>
+          </button>
+        )}
+
+        {/* Chatbot panel with real Agent Studio iframe */}
+        {chatOpen && (
+          <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:h-[640px] bg-white sm:rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-brand-800 text-white sm:rounded-t-2xl shrink-0">
+              <div>
+                <div className="text-xs text-brand-200">AI Assistant</div>
+                <div className="text-sm font-semibold">Product Recommendations</div>
+              </div>
+              <button
+                onClick={() => setChatOpen(false)}
+                aria-label="Close"
+                className="p-1 hover:bg-white/20 rounded"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+            </div>
+            <iframe
+              src={CHATBOT_URL}
+              title="AI Assistant"
+              className="flex-1 w-full border-0"
+              allow="clipboard-write; microphone"
+            />
+          </div>
+        )}
       </div>
     </>
   );
