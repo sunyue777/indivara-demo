@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import Script from 'next/script';
 
 const fmt = (n) => '₱' + Number(n || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 });
 const fmtPct = (n) => Number(n || 0).toFixed(1) + '%';
 
-// Format YYYY-MM-DD into a nice short label like "Jan 19, 1965"
 const fmtBirthDate = (iso) => {
   if (!iso) return null;
   const d = new Date(iso);
@@ -37,9 +37,9 @@ const FROM_LABEL = {
 };
 
 const DONUT_COLORS = [
-  '#0891b2', '#06b6d4', '#22d3ee', '#67e8f9', '#a5f3fc',
-  '#0e7490', '#155e75', '#164e63', '#10b981', '#34d399',
-  '#6ee7b7', '#a7f3d0', '#0d9488', '#14b8a6', '#5eead4',
+  '#3DBFD4', '#22a8c0', '#1c8aa1', '#1b6f82', '#a3e9f2',
+  '#6dd7e6', '#1c5b6b', '#10b981', '#34d399', '#6ee7b7',
+  '#a7f3d0', '#0d9488', '#14b8a6', '#5eead4', '#1849a3',
 ];
 
 const iconFor = (key) => {
@@ -98,21 +98,9 @@ function DonutChart({ data, size = 180 }) {
 
     let d_path;
     if (data.length === 1) {
-      d_path = `
-        M ${cx} ${cy - radius}
-        A ${radius} ${radius} 0 1 1 ${cx - 0.01} ${cy - radius}
-        L ${cx - 0.01} ${cy - innerRadius}
-        A ${innerRadius} ${innerRadius} 0 1 0 ${cx} ${cy - innerRadius}
-        Z
-      `;
+      d_path = `M ${cx} ${cy - radius} A ${radius} ${radius} 0 1 1 ${cx - 0.01} ${cy - radius} L ${cx - 0.01} ${cy - innerRadius} A ${innerRadius} ${innerRadius} 0 1 0 ${cx} ${cy - innerRadius} Z`;
     } else {
-      d_path = `
-        M ${x1} ${y1}
-        A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2}
-        L ${x3} ${y3}
-        A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4}
-        Z
-      `;
+      d_path = `M ${x1} ${y1} A ${radius} ${radius} 0 ${largeArc} 1 ${x2} ${y2} L ${x3} ${y3} A ${innerRadius} ${innerRadius} 0 ${largeArc} 0 ${x4} ${y4} Z`;
     }
 
     return {
@@ -150,11 +138,10 @@ function DonutChart({ data, size = 180 }) {
 
 export default function Detail() {
   const router = useRouter();
-  const { customer_id, from } = router.query;
+  const { customer_id, from, sales_code } = router.query;
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (!customer_id) return;
@@ -172,7 +159,7 @@ export default function Detail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="text-slate-400">Loading client details…</div>
       </div>
     );
@@ -180,11 +167,11 @@ export default function Detail() {
 
   if (error || !data) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-white p-4">
         <div className="bg-white rounded-lg border border-slate-200 p-6 text-center max-w-sm">
           <div className="text-rose-600 font-semibold mb-2">Client not found</div>
           <div className="text-sm text-slate-500 break-all mb-4">Customer ID: {customer_id}</div>
-          <Link href="/" className="inline-block text-sm bg-brand-600 hover:bg-brand-700 text-white px-4 py-2 rounded-lg">
+          <Link href="/" className="inline-block text-sm bg-accent-600 hover:bg-accent-700 text-white px-4 py-2 rounded-lg">
             ← Back to Customer Summary
           </Link>
         </div>
@@ -198,19 +185,31 @@ export default function Detail() {
 
   const sortedPortfolio = [...portfolio].sort((a, b) => (b.pct_of_aum || 0) - (a.pct_of_aum || 0));
   const donutData = sortedPortfolio.map(h => ({ label: h.product_name, value: h.value || 0 }));
-  const backHref = from ? `/?filter=${from}` : '/';
+  const backHref = sales_code ? `/?sales_code=${sales_code}` : '/';
 
   return (
     <>
-      <Head><title>{summary.name} — Client Brief</title></Head>
+      <Head>
+        <title>{summary.name} — Client Brief</title>
+      </Head>
 
-      <div className="min-h-screen bg-slate-50 pb-24">
+      {/* Agent Studio chatbot iframe — only loads on detail page */}
+      <Script
+        id="chatbot-iframe"
+        src="https://agents.dyna.ai/assets/js/iframe.js"
+        data-bot-src="https://agents.dyna.ai/botWeb?id=89d8fb9686b35bbed87233a14b2d2d45&token=MTc3NTUzMjg0NzgyMApOSmxjNm4vUGU1dkI0ck5CdXlqV2Q0d1JxTFk9&key=LKqt%252FiLmIHI03gvZVug9Bam9VsA%253D&iframe=1"
+        data-default-open="false"
+        data-drag="true"
+        strategy="afterInteractive"
+      />
+
+      <div className="min-h-screen bg-white pb-24">
         {/* Back bar */}
         <div className="bg-white border-b border-slate-200">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3">
             <Link
               href={backHref}
-              className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-brand-700 transition"
+              className="inline-flex items-center gap-1.5 text-sm text-slate-600 hover:text-brand-600 transition"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M19 12H5M12 19l-7-7 7-7"/>
@@ -220,17 +219,17 @@ export default function Detail() {
           </div>
         </div>
 
-        {/* Header */}
-        <header className="bg-gradient-to-r from-brand-700 to-brand-500 text-white">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+        {/* Indivara-style header */}
+        <header className="bg-bannerBg">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
             <div className="flex items-start gap-4">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-white/20 backdrop-blur flex items-center justify-center text-xl sm:text-2xl font-semibold shrink-0 border border-white/30">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white flex items-center justify-center text-xl sm:text-2xl font-bold shrink-0 border-2 border-brand-400 text-brand-700">
                 {summary.avatar_initials}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-xs uppercase tracking-widest text-brand-100">Client Briefing</div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold mt-0.5 break-words">{summary.name}</h1>
-                <div className="text-sm text-brand-100 mt-1 flex items-center gap-2 flex-wrap">
+                <div className="text-xs uppercase tracking-widest text-slate-600 font-semibold">Client Briefing</div>
+                <h1 className="text-2xl sm:text-4xl font-black text-slate-900 mt-1 break-words leading-tight tracking-tight">{summary.name}</h1>
+                <div className="text-sm text-slate-600 mt-2 flex items-center gap-2 flex-wrap">
                   <span>
                     {summary.segment}
                     {summary.age && ` · ${summary.age} y/o`}
@@ -242,12 +241,12 @@ export default function Detail() {
                     </span>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-1.5 mt-2">
+                <div className="flex flex-wrap gap-1.5 mt-3">
                   {priority_flags.map((f, i) => (
                     <span
                       key={f}
-                      className={`text-[11px] px-2 py-1 rounded-full font-medium ${
-                        from === f ? 'bg-white text-brand-700 ring-2 ring-white/60' : 'bg-white/20 text-white border border-white/30'
+                      className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${
+                        from === f ? 'bg-brand-400 text-white' : 'bg-white text-slate-700 border border-slate-200'
                       }`}
                     >
                       {flag_labels[i]}
@@ -261,7 +260,7 @@ export default function Detail() {
 
         {/* Personalized banner */}
         {fromContext && personalBanner && (
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 -mt-2">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-4">
             <div className={`bg-white border border-slate-200 border-l-4 ${fromContext.accent} rounded-xl p-4 shadow-sm`}>
               <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
                 Why this client is on your {fromContext.label} list
@@ -289,7 +288,7 @@ export default function Detail() {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div>
                   <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Total AUM</div>
-                  <div className="text-lg sm:text-xl font-bold text-brand-700 mt-0.5">{fmt(summary.total_aum)}</div>
+                  <div className="text-lg sm:text-xl font-bold text-brand-600 mt-0.5">{fmt(summary.total_aum)}</div>
                 </div>
                 <div>
                   <div className="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Income</div>
@@ -413,7 +412,7 @@ export default function Detail() {
           <aside className="space-y-4">
             <div className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="flex items-center gap-2 mb-4">
-                <div className="w-6 h-6 rounded bg-brand-600 text-white flex items-center justify-center text-xs font-bold">AI</div>
+                <div className="w-6 h-6 rounded bg-brand-400 text-white flex items-center justify-center text-xs font-bold">AI</div>
                 <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold">Talking Points</div>
               </div>
 
@@ -423,7 +422,7 @@ export default function Detail() {
                   return (
                     <div
                       key={i}
-                      className={`border-l-2 pl-4 ${isContextPoint ? 'border-brand-600' : 'border-brand-300'}`}
+                      className={`border-l-2 pl-4 ${isContextPoint ? 'border-brand-500' : 'border-brand-200'}`}
                     >
                       <div className="flex items-center gap-2 text-brand-700 mb-1">
                         {iconFor(p.icon)}
@@ -439,54 +438,14 @@ export default function Detail() {
               </div>
             </div>
 
-            <div className="bg-gradient-to-br from-brand-50 to-emerald-50 rounded-xl border border-brand-200 p-5">
+            <div className="bg-bannerBg rounded-xl border border-brand-200 p-5">
               <div className="text-xs uppercase tracking-wider text-brand-700 font-semibold mb-1">AI Assistant</div>
-              <div className="text-sm text-slate-600">Need product recommendations for this client?</div>
-              <button
-                onClick={() => setChatOpen(true)}
-                className="mt-3 w-full bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium py-2 rounded-lg transition"
-              >
-                Ask AI Assistant
-              </button>
+              <div className="text-sm text-slate-700">
+                Ask the chatbot in the bottom-right corner for product recommendations tailored to this client.
+              </div>
             </div>
           </aside>
         </main>
-
-        {!chatOpen && (
-          <button
-            onClick={() => setChatOpen(true)}
-            aria-label="Open AI Assistant"
-            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-brand-600 hover:bg-brand-700 text-white shadow-lg flex items-center justify-center transition z-40"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/>
-            </svg>
-          </button>
-        )}
-
-        {chatOpen && (
-          <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[380px] sm:h-[600px] bg-white sm:rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-gradient-to-r from-brand-700 to-brand-500 text-white sm:rounded-t-2xl">
-              <div>
-                <div className="text-xs text-brand-100">AI Assistant</div>
-                <div className="text-sm font-semibold">Product Recommendations</div>
-              </div>
-              <button
-                onClick={() => setChatOpen(false)}
-                aria-label="Close"
-                className="p-1 hover:bg-white/20 rounded"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
-            </div>
-            <div className="flex-1 bg-slate-50 flex items-center justify-center text-sm text-slate-400 p-6 text-center">
-              <div>
-                <div className="font-medium text-slate-500 mb-2">Chatbot placeholder</div>
-                <div className="text-xs">When Agent C is live, the iframe will load here with customer_id pre-loaded as context.</div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </>
   );

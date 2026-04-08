@@ -3,6 +3,13 @@ import Link from 'next/link';
 
 const fmt = (n) => '₱' + Number(n || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 });
 
+const SALES_CODES = [
+  { code: 'RAMPVERIMG',  label: 'Ramos P. — RAMPVERIMG' },
+  { code: 'INVPTL',      label: 'Investment Portal — INVPTL' },
+  { code: 'RAMPVER',     label: 'Ramos P. — RAMPVER' },
+  { code: 'RAMPVER_OFL', label: 'Ramos P. — RAMPVER_OFL' },
+];
+
 const FILTERS = [
   { key: 'ALL',       label: 'All Clients' },
   { key: 'GROWTH',    label: 'Growth Opportunity' },
@@ -34,7 +41,6 @@ const TAG_SHORT = {
 
 const PAGE_SIZE = 20;
 
-// 3-state cycle: none → desc → asc → none
 const cycleSort = (current) => {
   if (current === 'none') return 'desc';
   if (current === 'desc') return 'asc';
@@ -48,8 +54,8 @@ const SortButton = ({ label, value, onClick }) => {
       onClick={onClick}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition border ${
         active
-          ? 'bg-brand-600 text-white border-brand-600'
-          : 'bg-white text-slate-600 border-slate-200 hover:border-brand-300'
+          ? 'bg-accent-600 text-white border-accent-600'
+          : 'bg-white text-slate-600 border-slate-200 hover:border-brand-400'
       }`}
     >
       {label}
@@ -61,6 +67,7 @@ const SortButton = ({ label, value, onClick }) => {
 
 export default function Home() {
   const [data, setData] = useState(null);
+  const [salesCode, setSalesCode] = useState('RAMPVERIMG');
   const [filter, setFilter] = useState('ALL');
   const [sortAum, setSortAum] = useState('none');
   const [sortHoldings, setSortHoldings] = useState('none');
@@ -69,7 +76,6 @@ export default function Home() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  // Debounce search input → search
   useEffect(() => {
     const t = setTimeout(() => setSearch(searchInput.trim()), 300);
     return () => clearTimeout(t);
@@ -78,7 +84,7 @@ export default function Home() {
   useEffect(() => {
     setLoading(true);
     const params = new URLSearchParams({
-      sales_code: 'RAMPVERIMG',
+      sales_code: salesCode,
       priority_filter: filter,
       sort_aum: sortAum,
       sort_holdings: sortHoldings,
@@ -90,10 +96,9 @@ export default function Home() {
       .then(r => r.json())
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
-  }, [filter, sortAum, sortHoldings, search, page]);
+  }, [salesCode, filter, sortAum, sortHoldings, search, page]);
 
-  // Reset to page 1 when filter / sort / search changes
-  useEffect(() => { setPage(1); }, [filter, sortAum, sortHoldings, search]);
+  useEffect(() => { setPage(1); }, [salesCode, filter, sortAum, sortHoldings, search]);
 
   const totalPages = data?.total_pages || 1;
   const showingStart = data && data.total > 0 ? (data.page - 1) * data.page_size + 1 : 0;
@@ -102,11 +107,36 @@ export default function Home() {
   const clearSorts = () => { setSortAum('none'); setSortHoldings('none'); };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="bg-gradient-to-r from-brand-700 to-brand-500 text-white">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
-          <h1 className="text-2xl sm:text-3xl font-semibold">Customer Summary</h1>
-          <div className="text-sm text-brand-100 mt-1">RM: RAMPVERIMG · {data?.total ?? 0} clients</div>
+    <div className="min-h-screen bg-white">
+      {/* Indivara-style hero header */}
+      <header className="bg-bannerBg">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="text-3xl sm:text-5xl font-black text-slate-900 leading-tight tracking-tight">
+                Customer Summary
+              </h1>
+              <p className="text-sm sm:text-base text-slate-600 mt-2">
+                AI-curated client insights to help RMs prioritise outreach
+              </p>
+            </div>
+            {/* Sales code switcher */}
+            <div className="shrink-0">
+              <label className="block text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">RM Account</label>
+              <select
+                value={salesCode}
+                onChange={(e) => setSalesCode(e.target.value)}
+                className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400 max-w-[240px]"
+              >
+                {SALES_CODES.map(s => (
+                  <option key={s.code} value={s.code}>{s.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <div className="mt-3 text-sm text-slate-600">
+            <span className="font-semibold text-brand-700">{salesCode}</span> · {data?.total ?? 0} clients in book
+          </div>
         </div>
       </header>
 
@@ -130,9 +160,7 @@ export default function Home() {
                 aria-label="Clear search"
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <path d="M6 18L18 6M6 6l12 12"/>
-                </svg>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
               </button>
             )}
           </div>
@@ -146,8 +174,8 @@ export default function Home() {
               onClick={() => setFilter(f.key)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition whitespace-nowrap ${
                 filter === f.key
-                  ? 'bg-brand-600 text-white shadow'
-                  : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-300'
+                  ? 'bg-brand-400 text-white shadow'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:border-brand-400'
               }`}
             >
               {f.label}
@@ -155,7 +183,7 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Sort controls + result count */}
+        {/* Sort + result count */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
           <div className="text-xs text-slate-500">
             {!loading && data && (
@@ -169,22 +197,15 @@ export default function Home() {
             <SortButton label="AUM" value={sortAum} onClick={() => setSortAum(cycleSort(sortAum))} />
             <SortButton label="Holdings" value={sortHoldings} onClick={() => setSortHoldings(cycleSort(sortHoldings))} />
             {(sortAum !== 'none' || sortHoldings !== 'none') && (
-              <button
-                onClick={clearSorts}
-                className="text-xs text-slate-400 hover:text-slate-600 underline"
-              >
-                clear
-              </button>
+              <button onClick={clearSorts} className="text-xs text-slate-400 hover:text-slate-600 underline">clear</button>
             )}
           </div>
         </div>
 
-        {loading && (
-          <div className="bg-white rounded-lg p-8 text-center text-slate-400">Loading…</div>
-        )}
+        {loading && <div className="bg-white rounded-lg border border-slate-100 p-8 text-center text-slate-400">Loading…</div>}
 
         {!loading && data && data.clients.length === 0 && (
-          <div className="bg-white rounded-lg p-8 text-center text-slate-400">No clients match this filter.</div>
+          <div className="bg-white rounded-lg border border-slate-100 p-8 text-center text-slate-400">No clients match this filter.</div>
         )}
 
         {!loading && data && data.clients.length > 0 && (
@@ -193,7 +214,7 @@ export default function Home() {
               {data.clients.map(c => (
                 <Link
                   key={c.customer_id}
-                  href={`/detail?customer_id=${c.customer_id}&from=${filter}`}
+                  href={`/detail?customer_id=${c.customer_id}&from=${filter}&sales_code=${salesCode}`}
                   className="block bg-white rounded-lg border border-slate-200 hover:border-brand-400 hover:shadow-md transition p-4"
                 >
                   <div className="flex items-center gap-4">
@@ -207,13 +228,7 @@ export default function Home() {
                         {c.days_to_birthday !== null && c.days_to_birthday !== undefined && c.days_to_birthday <= 7 && (
                           <span
                             className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-pink-100 text-pink-700 border border-pink-200"
-                            title={
-                              c.days_to_birthday === 0
-                                ? 'Birthday today!'
-                                : c.days_to_birthday === 1
-                                ? 'Birthday tomorrow'
-                                : `Birthday in ${c.days_to_birthday} days`
-                            }
+                            title={c.days_to_birthday === 0 ? 'Birthday today!' : c.days_to_birthday === 1 ? 'Birthday tomorrow' : `Birthday in ${c.days_to_birthday} days`}
                           >
                             🎂 {c.days_to_birthday === 0 ? 'today' : c.days_to_birthday === 1 ? 'tomorrow' : `${c.days_to_birthday}d`}
                           </span>
@@ -223,14 +238,11 @@ export default function Home() {
                         {c.priority_flags.map(f => {
                           const isPrimary = filter !== 'ALL' && f === filter;
                           return (
-                            <span
-                              key={f}
-                              className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                                isPrimary
-                                  ? TAG_PRIMARY[f]
-                                  : (filter === 'ALL' ? TAG_PRIMARY[f] : TAG_MUTED[f]) || 'bg-slate-100 text-slate-600'
-                              }`}
-                            >
+                            <span key={f} className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                              isPrimary
+                                ? TAG_PRIMARY[f]
+                                : (filter === 'ALL' ? TAG_PRIMARY[f] : TAG_MUTED[f]) || 'bg-slate-100 text-slate-600'
+                            }`}>
                               {TAG_SHORT[f] || f}
                             </span>
                           );
@@ -249,17 +261,13 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <div className="flex items-center justify-center gap-1 mt-6">
                 <button
                   onClick={() => setPage(Math.max(1, page - 1))}
                   disabled={page === 1}
                   className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  ← Prev
-                </button>
-
+                >← Prev</button>
                 {getPageNumbers(page, totalPages).map((p, i) => (
                   p === '...' ? (
                     <span key={i} className="px-2 text-slate-400">…</span>
@@ -269,22 +277,17 @@ export default function Home() {
                       onClick={() => setPage(p)}
                       className={`min-w-[36px] px-3 py-1.5 text-sm rounded-lg border ${
                         p === page
-                          ? 'bg-brand-600 text-white border-brand-600'
+                          ? 'bg-brand-400 text-white border-brand-400'
                           : 'bg-white text-slate-600 border-slate-200 hover:border-brand-400'
                       }`}
-                    >
-                      {p}
-                    </button>
+                    >{p}</button>
                   )
                 ))}
-
                 <button
                   onClick={() => setPage(Math.min(totalPages, page + 1))}
                   disabled={page === totalPages}
                   className="px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white text-slate-600 hover:border-brand-400 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Next →
-                </button>
+                >Next →</button>
               </div>
             )}
           </>
