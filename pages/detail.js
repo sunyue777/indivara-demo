@@ -6,6 +6,14 @@ import Link from 'next/link';
 const fmt = (n) => '₱' + Number(n || 0).toLocaleString('en-PH', { maximumFractionDigits: 0 });
 const fmtPct = (n) => Number(n || 0).toFixed(1) + '%';
 
+// Format YYYY-MM-DD into a nice short label like "Jan 19, 1965"
+const fmtBirthDate = (iso) => {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+};
+
 const riskBadgeColor = {
   'Conservative':              'bg-emerald-100 text-emerald-700',
   'Moderately Conservative':   'bg-teal-100 text-teal-700',
@@ -26,7 +34,6 @@ const FROM_LABEL = {
   UPSELL:    { label: 'Up-sell Opportunity',    accent: 'border-l-violet-500' },
   REBALANCE: { label: 'Rebalance Alert',        accent: 'border-l-rose-500' },
   CROSSSELL: { label: 'Cross-sell Opportunity', accent: 'border-l-amber-500' },
-  BIRTHDAY:  { label: 'Birthday This Week',     accent: 'border-l-pink-500' },
 };
 
 const DONUT_COLORS = [
@@ -223,10 +230,17 @@ export default function Detail() {
               <div className="flex-1 min-w-0">
                 <div className="text-xs uppercase tracking-widest text-brand-100">Client Briefing</div>
                 <h1 className="text-xl sm:text-2xl lg:text-3xl font-semibold mt-0.5 break-words">{summary.name}</h1>
-                <div className="text-sm text-brand-100 mt-1">
-                  {summary.segment}
-                  {summary.age && ` · ${summary.age} y/o`}
-                  {summary.gender && summary.gender !== 'N/A' && ` · ${summary.gender}`}
+                <div className="text-sm text-brand-100 mt-1 flex items-center gap-2 flex-wrap">
+                  <span>
+                    {summary.segment}
+                    {summary.age && ` · ${summary.age} y/o`}
+                    {summary.gender && summary.gender !== 'N/A' && ` · ${summary.gender}`}
+                  </span>
+                  {summary.days_to_birthday !== null && summary.days_to_birthday !== undefined && summary.days_to_birthday <= 7 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full font-medium">
+                      🎂 {summary.days_to_birthday === 0 ? 'Birthday today' : summary.days_to_birthday === 1 ? 'Birthday tomorrow' : `Birthday in ${summary.days_to_birthday} days`}
+                    </span>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-1.5 mt-2">
                   {priority_flags.map((f, i) => (
@@ -236,7 +250,7 @@ export default function Detail() {
                         from === f ? 'bg-white text-brand-700 ring-2 ring-white/60' : 'bg-white/20 text-white border border-white/30'
                       }`}
                     >
-                      {f === 'BIRTHDAY' && '🎂 '}{flag_labels[i]}
+                      {flag_labels[i]}
                     </span>
                   ))}
                 </div>
@@ -262,7 +276,8 @@ export default function Detail() {
 
             <section className="bg-white rounded-xl border border-slate-200 p-5 sm:p-6">
               <div className="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-4">About Client</div>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <Field label="Birth Date" value={fmtBirthDate(summary.birth_date)} />
                 <Field label="Profession" value={summary.profession} />
                 <Field label="Marital Status" value={summary.marital_status} />
                 <Field label="Location" value={summary.location} />

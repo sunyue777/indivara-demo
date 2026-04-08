@@ -9,7 +9,6 @@ const FILTERS = [
   { key: 'UPSELL',    label: 'Up-sell Opportunity' },
   { key: 'REBALANCE', label: 'Rebalance Alert' },
   { key: 'CROSSSELL', label: 'Cross-sell Opportunity' },
-  { key: 'BIRTHDAY',  label: '🎂 Birthday This Week' },
 ];
 
 const TAG_PRIMARY = {
@@ -17,7 +16,6 @@ const TAG_PRIMARY = {
   REBALANCE: 'bg-rose-600 text-white',
   UPSELL:    'bg-violet-600 text-white',
   CROSSSELL: 'bg-amber-600 text-white',
-  BIRTHDAY:  'bg-pink-600 text-white',
 };
 
 const TAG_MUTED = {
@@ -25,7 +23,6 @@ const TAG_MUTED = {
   REBALANCE: 'bg-rose-50 text-rose-600 border border-rose-100',
   UPSELL:    'bg-violet-50 text-violet-600 border border-violet-100',
   CROSSSELL: 'bg-amber-50 text-amber-600 border border-amber-100',
-  BIRTHDAY:  'bg-pink-50 text-pink-600 border border-pink-100',
 };
 
 const TAG_SHORT = {
@@ -33,7 +30,6 @@ const TAG_SHORT = {
   REBALANCE: 'Rebalance',
   UPSELL: 'Up-sell',
   CROSSSELL: 'Cross-sell',
-  BIRTHDAY: '🎂 Birthday',
 };
 
 const PAGE_SIZE = 20;
@@ -208,6 +204,20 @@ export default function Home() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <div className="font-medium text-slate-900 truncate">{c.client_name}</div>
                         {c.age && <span className="text-xs text-slate-400">· age {c.age}</span>}
+                        {c.days_to_birthday !== null && c.days_to_birthday !== undefined && c.days_to_birthday <= 7 && (
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-pink-100 text-pink-700 border border-pink-200"
+                            title={
+                              c.days_to_birthday === 0
+                                ? 'Birthday today!'
+                                : c.days_to_birthday === 1
+                                ? 'Birthday tomorrow'
+                                : `Birthday in ${c.days_to_birthday} days`
+                            }
+                          >
+                            🎂 {c.days_to_birthday === 0 ? 'today' : c.days_to_birthday === 1 ? 'tomorrow' : `${c.days_to_birthday}d`}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                         {c.priority_flags.map(f => {
