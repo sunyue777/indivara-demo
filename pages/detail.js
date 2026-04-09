@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -143,23 +143,143 @@ export default function Detail() {
   const [error, setError] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
 
-  // Agent Studio chatbot URL (from the <script data-bot-src="..."> value).
-  // If token expires, replace the BASE with the fresh embed URL from Agent Studio.
-  //
-  // We append customer_id and sales_code as extra query parameters so that
-  // when Agent Studio adds support for URL-parameter context injection, the
-  // agent can read which client the RM is currently viewing. Until then,
-  // these extra parameters are harmless — they just sit in the URL unused.
-  //
-  // Ask your Agent Studio teammate to confirm:
-  //   1) Does botWeb pass extra URL params into the agent context?
-  //   2) If yes, what parameter name does it expect (customer_id? variables.customer_id?)
-  //   3) How should the agent use the customer_id to look up client data?
-  const CHATBOT_BASE = 'https://agents.dyna.ai/botWeb?id=b3608c27dc2f624cd6985bb8eed6c0a2&token=MTc3NTYzNTc5OTU2MApEK0wrUUFNU0RGaVloTnRiVlJSdVh4NzYvTlU9&key=I4mK0VlMAYfbtokcD2ZCzdapUu8%253D&iframe=1';
+  // ============================================================
+  // WebSocket chat with Agent Studio
+  // ============================================================
+  // Credentials provided by Agent Studio team. These do NOT expire.
+  // segment_code is generated per session (random) and identifies
+  // this conversation thread on the Agent Studio side.
+  const WS_URL = 'wss://agents.dyna.ai/openapi/v2/ws/dialog/';
+  const WS_CREDS = {
+    cybertron_robot_key: 'NJGk6v0a6GuxNOLx6bcmSbOKtec%3D',
+    cybertron_robot_token: 'MTc3NTYzNTc5OTQyMwpzUXZ3clZoQlJGMkNXcnpNZG1sTHpob2UyaGc9',
+    username: 'internaltest_xiaolu@dyna.ai',
+  };
 
-  const chatbotUrl = customer_id
-    ? `${CHATBOT_BASE}&customer_id=${encodeURIComponent(customer_id)}${sales_code ? `&sales_code=${encodeURIComponent(sales_code)}` : ''}`
-    : CHATBOT_BASE;
+  const wsRef = useRef(null);
+  const segmentCodeRef = useRef(null);
+  const [wsStatus, setWsStatus] = useState('idle'); // idle | connecting | ready | error
+  const [chatMessages, setChatMessages] = useState([]); // [{role: 'user'|'agent'|'system', text: string}]
+  const [chatInput, setChatInput] = useState('');
+  const [waitingReply, setWaitingReply] = useState(false);
+  const messagesEndRef = useRef(null);
+
+  // Generate a fresh segment_code per chat session
+  const newSegmentCode = () => {
+    // Random alphanumeric, ~22 chars
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let s = '';
+    for (let i = 0; i < 22; i++) s += chars[Math.floor(Math.random() * chars.length)];
+    return s + Date.now().toString().slice(-6);
+  };
+
+  // Send a question through the WebSocket
+  const sendWsQuestion = (question) => {
+    const ws = wsRef.current;
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+      console.warn('[chat] WebSocket not open, cannot send');
+      return false;
+    }
+    const payload = {
+      ...WS_CREDS,
+      question: String(question),
+      segment_code: segmentCodeRef.current,
+    };
+    console.log('[chat] sending:', payload);
+    ws.send(JSON.stringify(payload));
+    return true;
+  };
+
+  // Open WebSocket when the chat panel is opened.
+  // Auto-send customer_id as the first message so the agent loads
+  // the client's profile from its database.
+  useEffect(() => {
+    if (!chatOpen || !customer_id) return;
+
+    // Reset session state
+    segmentCodeRef.current = newSegmentCode();
+    setChatMessages([]);
+    setWsStatus('connecting');
+
+    const ws = new WebSocket(WS_URL);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log('[chat] WebSocket opened');
+      setWsStatus('ready');
+      // Auto-send the customer_id as the first "question". This is how the
+      // Agent Studio agent knows which client to load. The agent's reply
+      // becomes our welcome message.
+      setWaitingReply(true);
+      sendWsQuestion(customer_id);
+    };
+
+    ws.onmessage = (event) => {
+      console.log('[chat] received raw:', event.data);
+      let parsed;
+      try {
+        parsed = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+      } catch (e) {
+        // Not JSON — treat the whole thing as plain text
+        parsed = { answer: String(event.data) };
+      }
+
+      // Try multiple field names because we don't know the exact schema yet.
+      // After the first real test, narrow this down to the actual field.
+      const text =
+        parsed.answer ||
+        parsed.message ||
+        parsed.response ||
+        parsed.text ||
+        parsed.content ||
+        parsed.data ||
+        (typeof parsed === 'string' ? parsed : JSON.stringify(parsed));
+
+      setChatMessages((prev) => [...prev, { role: 'agent', text: String(text) }]);
+      setWaitingReply(false);
+    };
+
+    ws.onerror = (err) => {
+      console.error('[chat] WebSocket error:', err);
+      setWsStatus('error');
+      setWaitingReply(false);
+    };
+
+    ws.onclose = (event) => {
+      console.log('[chat] WebSocket closed', event.code, event.reason);
+      if (wsStatus !== 'error') setWsStatus('idle');
+    };
+
+    return () => {
+      try {
+        ws.close();
+      } catch (e) {}
+      wsRef.current = null;
+    };
+  }, [chatOpen, customer_id]);
+
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
+    }
+  }, [chatMessages, waitingReply]);
+
+  const handleSendChat = () => {
+    const text = chatInput.trim();
+    if (!text || waitingReply || wsStatus !== 'ready') return;
+    setChatMessages((prev) => [...prev, { role: 'user', text }]);
+    setChatInput('');
+    setWaitingReply(true);
+    sendWsQuestion(text);
+  };
+
+  const handleChatKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendChat();
+    }
+  };
 
   useEffect(() => {
     if (!customer_id) return;
@@ -470,29 +590,107 @@ export default function Detail() {
           </button>
         )}
 
-        {/* Chatbot panel with real Agent Studio iframe */}
+        {/* Chatbot panel — custom chat UI talking to Agent Studio via WebSocket */}
         {chatOpen && (
           <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:h-[640px] bg-white sm:rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
+            {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-brand-800 text-white sm:rounded-t-2xl shrink-0">
               <div>
                 <div className="text-xs text-brand-200">AI Assistant</div>
-                <div className="text-sm font-semibold">Product Recommendations</div>
+                <div className="text-sm font-semibold">
+                  {summary?.name ? summary.name.split(' ')[0] : 'Product Recommendations'}
+                </div>
               </div>
-              <button
-                onClick={() => setChatOpen(false)}
-                aria-label="Close"
-                className="p-1 hover:bg-white/20 rounded"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
-              </button>
+              <div className="flex items-center gap-2">
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+                    wsStatus === 'ready'      ? 'bg-emerald-400 text-emerald-900' :
+                    wsStatus === 'connecting' ? 'bg-amber-300 text-amber-900' :
+                    wsStatus === 'error'      ? 'bg-rose-400 text-white' :
+                                                'bg-slate-300 text-slate-700'
+                  }`}
+                >
+                  {wsStatus === 'ready' ? 'online' :
+                   wsStatus === 'connecting' ? 'connecting…' :
+                   wsStatus === 'error' ? 'error' : 'offline'}
+                </span>
+                <button
+                  onClick={() => setChatOpen(false)}
+                  aria-label="Close"
+                  className="p-1 hover:bg-white/20 rounded"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              </div>
             </div>
-            <iframe
-              src={chatbotUrl}
-              title="AI Assistant"
-              className="flex-1 w-full border-0"
-              allow="clipboard-write; microphone"
-              key={customer_id}
-            />
+
+            {/* Messages */}
+            <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-3">
+              {wsStatus === 'connecting' && chatMessages.length === 0 && (
+                <div className="text-center text-xs text-slate-400 py-8">
+                  Connecting to AI Assistant…
+                </div>
+              )}
+              {wsStatus === 'error' && (
+                <div className="text-center text-xs text-rose-600 py-8">
+                  Connection failed. Close and reopen this panel to retry.
+                </div>
+              )}
+
+              {chatMessages.map((m, i) => (
+                <div
+                  key={i}
+                  className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
+                      m.role === 'user'
+                        ? 'bg-brand-700 text-white rounded-br-sm'
+                        : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm'
+                    }`}
+                  >
+                    {m.text}
+                  </div>
+                </div>
+              ))}
+
+              {waitingReply && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
+                    <div className="flex gap-1">
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Input */}
+            <div className="border-t border-slate-100 p-3 bg-white shrink-0">
+              <div className="flex items-end gap-2">
+                <textarea
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyDown={handleChatKeyDown}
+                  placeholder={wsStatus === 'ready' ? 'Ask about this client…' : 'Connecting…'}
+                  disabled={wsStatus !== 'ready' || waitingReply}
+                  rows={1}
+                  className="flex-1 resize-none bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-brand-500 focus:bg-white disabled:opacity-50 max-h-32"
+                />
+                <button
+                  onClick={handleSendChat}
+                  disabled={wsStatus !== 'ready' || waitingReply || !chatInput.trim()}
+                  className="bg-brand-700 hover:bg-brand-800 disabled:bg-slate-300 text-white rounded-xl w-10 h-10 flex items-center justify-center shrink-0 transition"
+                  aria-label="Send"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                    <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
