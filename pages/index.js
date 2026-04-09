@@ -111,31 +111,16 @@ export default function Home() {
       {/* Indivara-style hero header */}
       <header className="bg-bannerBg">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-3xl sm:text-5xl font-black text-slate-900 leading-tight tracking-tight">
-                Customer Summary
-              </h1>
-              <p className="text-sm sm:text-base text-slate-600 mt-2">
-                AI-curated client insights to help RMs prioritise outreach
-              </p>
-            </div>
-            {/* Sales code switcher */}
-            <div className="shrink-0">
-              <label className="block text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">RM Account</label>
-              <select
-                value={salesCode}
-                onChange={(e) => setSalesCode(e.target.value)}
-                className="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium focus:outline-none focus:border-brand-400 focus:ring-1 focus:ring-brand-400 max-w-[240px]"
-              >
-                {SALES_CODES.map(s => (
-                  <option key={s.code} value={s.code}>{s.label}</option>
-                ))}
-              </select>
-            </div>
+          <div>
+            <h1 className="text-3xl sm:text-5xl font-black text-slate-900 leading-tight tracking-tight">
+              Customer Summary
+            </h1>
+            <p className="text-sm sm:text-base text-slate-600 mt-2">
+              AI-curated client insights to help RMs prioritise outreach
+            </p>
           </div>
           <div className="mt-3 text-sm text-slate-600">
-            <span className="font-semibold text-brand-700">{salesCode}</span> · {data?.total ?? 0} clients in book
+            <span className="font-semibold text-brand-700">Ramos P. — RAMPVERIMG</span> · {data?.total ?? 0} clients in book
           </div>
         </div>
       </header>
