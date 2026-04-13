@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
@@ -28,11 +28,12 @@ const statusBg = {
   unknown:  'bg-slate-50 border-slate-200 text-slate-700',
 };
 
-const FROM_LABEL = {
-  GROWTH:    { label: 'Growth Opportunity',     accent: 'border-l-emerald-500' },
-  UPSELL:    { label: 'Up-sell Opportunity',    accent: 'border-l-violet-500' },
-  REBALANCE: { label: 'Rebalance Alert',        accent: 'border-l-rose-500' },
-  CROSSSELL: { label: 'Cross-sell Opportunity', accent: 'border-l-amber-500' },
+// Per-flag accent colors used for the banner left border + active chip
+const FLAG_META = {
+  GROWTH:    { label: 'Growth Opportunity',     accent: 'border-l-emerald-500', chipActive: 'bg-emerald-600 text-white border-emerald-600' },
+  UPSELL:    { label: 'Up-sell Opportunity',    accent: 'border-l-violet-500',  chipActive: 'bg-violet-600 text-white border-violet-600' },
+  REBALANCE: { label: 'Rebalance Alert',        accent: 'border-l-rose-500',    chipActive: 'bg-rose-600 text-white border-rose-600' },
+  CROSSSELL: { label: 'Cross-sell Opportunity', accent: 'border-l-amber-500',   chipActive: 'bg-amber-600 text-white border-amber-600' },
 };
 
 const DONUT_COLORS = [
@@ -67,6 +68,184 @@ const Field = ({ label, value }) => (
     <div className="text-sm font-medium text-slate-800 mt-0.5 truncate">{value || '—'}</div>
   </div>
 );
+
+// ============================================================
+// Lightweight markdown renderer for chatbot replies.
+// Supports: # / ## / ### headings, **bold**, *italic*, `code`,
+// [link](url), - / * / 1. lists (with nesting via 2-space indent),
+// blockquotes, --- horizontal rules, blank-line paragraphs.
+// No external dependency — keeps package.json untouched.
+// ============================================================
+function renderInline(text, keyPrefix = 'i') {
+  // Escape HTML-ish chars first by working with React nodes piecewise.
+  // Order matters: code -> link -> bold -> italic.
+  const nodes = [];
+  let remaining = text;
+  let idx = 0;
+  // Combined regex with named-ish ordering through alternation
+  const re = /(`[^`]+`)|(\[[^\]]+\]\([^)]+\))|(\*\*[^*]+\*\*)|(\*[^*\n]+\*)/;
+  while (remaining.length) {
+    const m = remaining.match(re);
+    if (!m) {
+      nodes.push(remaining);
+      break;
+    }
+    if (m.index > 0) nodes.push(remaining.slice(0, m.index));
+    const token = m[0];
+    if (token.startsWith('`')) {
+      nodes.push(<code key={`${keyPrefix}-c${idx++}`} className="bg-slate-100 text-brand-700 px-1 py-0.5 rounded text-[12px] font-mono">{token.slice(1, -1)}</code>);
+    } else if (token.startsWith('[')) {
+      const linkMatch = token.match(/\[([^\]]+)\]\(([^)]+)\)/);
+      if (linkMatch) {
+        nodes.push(<a key={`${keyPrefix}-a${idx++}`} href={linkMatch[2]} target="_blank" rel="noopener noreferrer" className="text-brand-700 underline hover:text-brand-800">{linkMatch[1]}</a>);
+      } else {
+        nodes.push(token);
+      }
+    } else if (token.startsWith('**')) {
+      nodes.push(<strong key={`${keyPrefix}-b${idx++}`} className="font-semibold text-slate-900">{token.slice(2, -2)}</strong>);
+    } else {
+      nodes.push(<em key={`${keyPrefix}-e${idx++}`}>{token.slice(1, -1)}</em>);
+    }
+    remaining = remaining.slice(m.index + token.length);
+  }
+  return nodes;
+}
+
+function MarkdownMessage({ text }) {
+  if (!text) return null;
+  const lines = String(text).replace(/\r\n/g, '\n').split('\n');
+  const blocks = [];
+  let i = 0;
+  let listBuffer = null; // { type: 'ul'|'ol', items: [{text, indent}] }
+  let paraBuffer = [];
+
+  const flushPara = () => {
+    if (paraBuffer.length) {
+      blocks.push({ type: 'p', text: paraBuffer.join(' ') });
+      paraBuffer = [];
+    }
+  };
+  const flushList = () => {
+    if (listBuffer) {
+      blocks.push(listBuffer);
+      listBuffer = null;
+    }
+  };
+
+  while (i < lines.length) {
+    const raw = lines[i];
+    const line = raw.trimEnd();
+
+    // Blank line — paragraph / list break
+    if (line.trim() === '') {
+      flushPara();
+      flushList();
+      i++;
+      continue;
+    }
+
+    // Horizontal rule
+    if (/^---+$/.test(line.trim())) {
+      flushPara(); flushList();
+      blocks.push({ type: 'hr' });
+      i++;
+      continue;
+    }
+
+    // Headings
+    const h = line.match(/^(#{1,3})\s+(.*)$/);
+    if (h) {
+      flushPara(); flushList();
+      blocks.push({ type: 'h', level: h[1].length, text: h[2] });
+      i++;
+      continue;
+    }
+
+    // Blockquote
+    if (/^>\s?/.test(line)) {
+      flushPara(); flushList();
+      blocks.push({ type: 'quote', text: line.replace(/^>\s?/, '') });
+      i++;
+      continue;
+    }
+
+    // Unordered list item
+    const ul = line.match(/^(\s*)[-*+]\s+(.*)$/);
+    if (ul) {
+      flushPara();
+      const indent = Math.floor(ul[1].length / 2);
+      if (!listBuffer || listBuffer.type !== 'ul') {
+        flushList();
+        listBuffer = { type: 'ul', items: [] };
+      }
+      listBuffer.items.push({ text: ul[2], indent });
+      i++;
+      continue;
+    }
+
+    // Ordered list item
+    const ol = line.match(/^(\s*)\d+\.\s+(.*)$/);
+    if (ol) {
+      flushPara();
+      const indent = Math.floor(ol[1].length / 2);
+      if (!listBuffer || listBuffer.type !== 'ol') {
+        flushList();
+        listBuffer = { type: 'ol', items: [] };
+      }
+      listBuffer.items.push({ text: ol[2], indent });
+      i++;
+      continue;
+    }
+
+    // Default — paragraph line
+    flushList();
+    paraBuffer.push(line);
+    i++;
+  }
+  flushPara();
+  flushList();
+
+  return (
+    <div className="space-y-2 text-sm leading-relaxed text-slate-800">
+      {blocks.map((b, k) => {
+        if (b.type === 'h') {
+          const cls =
+            b.level === 1 ? 'text-base font-bold text-slate-900 mt-1' :
+            b.level === 2 ? 'text-sm font-bold text-slate-900 mt-1' :
+                            'text-sm font-semibold text-slate-800 mt-1';
+          return <div key={k} className={cls}>{renderInline(b.text, `h${k}`)}</div>;
+        }
+        if (b.type === 'p') {
+          return <p key={k}>{renderInline(b.text, `p${k}`)}</p>;
+        }
+        if (b.type === 'hr') {
+          return <hr key={k} className="border-slate-200 my-2" />;
+        }
+        if (b.type === 'quote') {
+          return (
+            <div key={k} className="border-l-2 border-brand-300 pl-3 text-slate-600 italic">
+              {renderInline(b.text, `q${k}`)}
+            </div>
+          );
+        }
+        // Lists
+        const ListTag = b.type === 'ol' ? 'ol' : 'ul';
+        return (
+          <ListTag
+            key={k}
+            className={`${b.type === 'ol' ? 'list-decimal' : 'list-disc'} pl-5 space-y-1 marker:text-slate-400`}
+          >
+            {b.items.map((it, j) => (
+              <li key={j} className={it.indent > 0 ? 'ml-' + (it.indent * 4) : ''}>
+                {renderInline(it.text, `li${k}-${j}`)}
+              </li>
+            ))}
+          </ListTag>
+        );
+      })}
+    </div>
+  );
+}
 
 function DonutChart({ data, size = 180 }) {
   if (!data || data.length === 0) return null;
@@ -135,6 +314,15 @@ function DonutChart({ data, size = 180 }) {
   );
 }
 
+// Quick prompts shown above the chat input — give the RM clear examples
+// of what the AI Assistant supports, addressing Indivara's feedback that
+// the chatbot's capabilities & boundaries were unclear.
+const QUICK_PROMPTS = [
+  { label: 'Recommend products', text: 'Recommend 2-3 suitable products for this customer.' },
+  { label: 'Why not a fund?',    text: 'Why would ATRAM Global AI Feeder Fund not be suitable for this customer?' },
+  { label: 'Draft an opener',    text: 'Help me draft a conversation opener for this client.' },
+];
+
 export default function Detail() {
   const router = useRouter();
   const { customer_id, from, sales_code } = router.query;
@@ -142,6 +330,11 @@ export default function Detail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [chatOpen, setChatOpen] = useState(false);
+
+  // Selected flag drives both the banner and the talking-points "Focus" tag.
+  // Initialized from the URL ?from= param when arriving from a filter tab,
+  // otherwise null (no auto-banner — the RM picks via clickable chips).
+  const [selectedFlag, setSelectedFlag] = useState(null);
 
   // ============================================================
   // WebSocket chat with Agent Studio
@@ -167,7 +360,6 @@ export default function Detail() {
 
   // Generate a fresh segment_code per chat session
   const newSegmentCode = () => {
-    // Random alphanumeric, ~22 chars
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     let s = '';
     for (let i = 0; i < 22; i++) s += chars[Math.floor(Math.random() * chars.length)];
@@ -199,7 +391,7 @@ export default function Detail() {
 
     // Reset session state
     segmentCodeRef.current = newSegmentCode();
-    lastAgentReplyRef.current = null; // Reset duplicate tracker
+    lastAgentReplyRef.current = null;
     setChatMessages([]);
     setWsStatus('connecting');
 
@@ -209,9 +401,6 @@ export default function Detail() {
     ws.onopen = () => {
       console.log('[chat] WebSocket opened');
       setWsStatus('ready');
-      // Auto-send the customer_id as the first "question". This is how the
-      // Agent Studio agent knows which client to load. The agent's reply
-      // becomes our welcome message.
       setWaitingReply(true);
       sendWsQuestion(customer_id);
     };
@@ -222,19 +411,14 @@ export default function Detail() {
       try {
         parsed = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
       } catch (e) {
-        // Not JSON — treat the whole thing as plain text
         parsed = { answer: String(event.data) };
       }
 
-      // Extract robot_user_replying from data.history array
-      // Only show messages that have actual content
       if (parsed.data && parsed.data.history && Array.isArray(parsed.data.history)) {
         const history = parsed.data.history;
-        // Find the last non-empty robot_user_replying message
         for (let i = history.length - 1; i >= 0; i--) {
           const reply = history[i].robot_user_replying;
           if (reply && reply.trim() !== '') {
-            // Avoid duplicates: only add if different from last agent reply
             if (lastAgentReplyRef.current !== reply) {
               lastAgentReplyRef.current = reply;
               setChatMessages((prev) => [...prev, { role: 'agent', text: String(reply) }]);
@@ -243,16 +427,13 @@ export default function Detail() {
             return;
           }
         }
-        // If no robot_user_replying found, ignore this message (don't show "success")
         return;
       }
 
-      // Fallback for error messages
       if (parsed.code && parsed.code !== '000000') {
         setChatMessages((prev) => [...prev, { role: 'agent', text: `Error: ${parsed.message || 'Unknown error'}` }]);
         setWaitingReply(false);
       }
-      // Ignore success status messages like { code: "000000", message: "success" }
     };
 
     ws.onerror = (err) => {
@@ -290,6 +471,13 @@ export default function Detail() {
     sendWsQuestion(text);
   };
 
+  const handleQuickPrompt = (text) => {
+    if (waitingReply || wsStatus !== 'ready') return;
+    setChatMessages((prev) => [...prev, { role: 'user', text }]);
+    setWaitingReply(true);
+    sendWsQuestion(text);
+  };
+
   const handleChatKeyDown = (e) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -310,6 +498,14 @@ export default function Detail() {
       .then(d => { setData(d); setLoading(false); })
       .catch(e => { setError(e.message); setLoading(false); });
   }, [customer_id, from]);
+
+  // Initialize selectedFlag once data loads.
+  // Priority: URL ?from= (if it's actually one of this client's flags) > null
+  useEffect(() => {
+    if (!data) return;
+    const validFromFilter = from && data.priority_flags && data.priority_flags.includes(from);
+    setSelectedFlag(validFromFilter ? from : null);
+  }, [data, from]);
 
   if (loading) {
     return (
@@ -334,8 +530,10 @@ export default function Detail() {
   }
 
   const { summary, portfolio, risk_check, talking_points, priority_flags, flag_labels, banners } = data;
-  const fromContext = from && FROM_LABEL[from] ? FROM_LABEL[from] : null;
-  const personalBanner = from && banners?.[from];
+
+  // Compute current banner from the *selected* flag, not the URL.
+  const selectedMeta = selectedFlag && FLAG_META[selectedFlag] ? FLAG_META[selectedFlag] : null;
+  const selectedBanner = selectedFlag && banners?.[selectedFlag];
 
   const sortedPortfolio = [...portfolio].sort((a, b) => (b.pct_of_aum || 0) - (a.pct_of_aum || 0));
   const donutData = sortedPortfolio.map(h => ({ label: h.product_name, value: h.value || 0 }));
@@ -385,31 +583,65 @@ export default function Detail() {
                     </span>
                   )}
                 </div>
+
+                {/* ===========================================================
+                    Clickable priority chips.
+                    Per Indivara feedback: chips should be clickable regardless
+                    of how the RM arrived at this page (including from "All
+                    Clients"), so they can drill into the rationale behind
+                    each flag. Active chip drives the banner below.
+                    =========================================================== */}
                 <div className="flex flex-wrap gap-1.5 mt-3">
-                  {priority_flags.map((f, i) => (
-                    <span
-                      key={f}
-                      className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${
-                        from === f ? 'bg-brand-700 text-white' : 'bg-white text-slate-700 border border-slate-200'
-                      }`}
-                    >
-                      {flag_labels[i]}
-                    </span>
-                  ))}
+                  {priority_flags.map((f, i) => {
+                    const isActive = selectedFlag === f;
+                    const meta = FLAG_META[f];
+                    const hasBanner = !!banners?.[f];
+                    return (
+                      <button
+                        key={f}
+                        type="button"
+                        onClick={() => setSelectedFlag(isActive ? null : f)}
+                        title={hasBanner ? 'Click to see why' : 'No additional context'}
+                        className={`text-[11px] px-2.5 py-1 rounded-full font-medium border transition ${
+                          isActive
+                            ? (meta?.chipActive || 'bg-brand-700 text-white border-brand-700')
+                            : 'bg-white text-slate-700 border-slate-200 hover:border-brand-500 hover:text-brand-700'
+                        }`}
+                      >
+                        {flag_labels[i]}
+                      </button>
+                    );
+                  })}
                 </div>
+                {priority_flags.length > 0 && !selectedFlag && (
+                  <div className="text-[11px] text-slate-500 mt-2 italic">
+                    Tap a tag above to see why this client is on that list.
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </header>
 
-        {/* Personalized banner */}
-        {fromContext && personalBanner && (
+        {/* Personalized banner — driven by selectedFlag, not the URL */}
+        {selectedMeta && selectedBanner && (
           <div className="max-w-6xl mx-auto px-4 sm:px-6 mt-4">
-            <div className={`bg-white border border-slate-200 border-l-4 ${fromContext.accent} rounded-xl p-4 shadow-sm`}>
-              <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
-                Why this client is on your {fromContext.label} list
+            <div className={`bg-white border border-slate-200 border-l-4 ${selectedMeta.accent} rounded-xl p-4 shadow-sm relative`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1 min-w-0">
+                  <div className="text-[11px] uppercase tracking-wider text-slate-400 font-semibold mb-1">
+                    Why this client is on your {selectedMeta.label} list
+                  </div>
+                  <div className="text-sm text-slate-700 leading-relaxed">{selectedBanner}</div>
+                </div>
+                <button
+                  onClick={() => setSelectedFlag(null)}
+                  aria-label="Dismiss"
+                  className="text-slate-300 hover:text-slate-500 shrink-0"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
               </div>
-              <div className="text-sm text-slate-700 leading-relaxed">{personalBanner}</div>
             </div>
           </div>
         )}
@@ -562,7 +794,10 @@ export default function Detail() {
 
               <div className="space-y-4">
                 {talking_points.map((p, i) => {
-                  const isContextPoint = from && p.tag === from;
+                  // Focus highlight follows the *currently selected* flag,
+                  // so it stays in sync with the banner above when the RM
+                  // clicks different chips.
+                  const isContextPoint = selectedFlag && p.tag === selectedFlag;
                   return (
                     <div
                       key={i}
@@ -608,7 +843,7 @@ export default function Detail() {
 
         {/* Chatbot panel — custom chat UI talking to Agent Studio via WebSocket */}
         {chatOpen && (
-          <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[400px] sm:h-[640px] bg-white sm:rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
+          <div className="fixed inset-0 sm:inset-auto sm:bottom-6 sm:right-6 sm:w-[420px] sm:h-[680px] bg-white sm:rounded-2xl shadow-2xl border border-slate-200 flex flex-col z-50 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-brand-800 text-white sm:rounded-t-2xl shrink-0">
               <div>
@@ -640,6 +875,16 @@ export default function Detail() {
               </div>
             </div>
 
+            {/* Capability hint banner — shown only when chat is empty */}
+            {chatMessages.length === 0 && wsStatus !== 'connecting' && wsStatus !== 'error' && (
+              <div className="px-4 py-3 bg-bannerBg border-b border-brand-100 shrink-0">
+                <div className="text-[11px] uppercase tracking-wider text-brand-700 font-semibold mb-1">What I can help with</div>
+                <div className="text-xs text-slate-600 leading-relaxed">
+                  Suitable product recommendations, suitability rationale for any specific fund, and conversation openers — all grounded in this client's profile.
+                </div>
+              </div>
+            )}
+
             {/* Messages */}
             <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-3">
               {wsStatus === 'connecting' && chatMessages.length === 0 && (
@@ -659,13 +904,13 @@ export default function Detail() {
                   className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[85%] rounded-2xl px-4 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
+                    className={`max-w-[88%] rounded-2xl px-4 py-2.5 ${
                       m.role === 'user'
-                        ? 'bg-brand-700 text-white rounded-br-sm'
+                        ? 'bg-brand-700 text-white rounded-br-sm text-sm leading-relaxed whitespace-pre-wrap'
                         : 'bg-white border border-slate-200 text-slate-800 rounded-bl-sm shadow-sm'
                     }`}
                   >
-                    {m.text}
+                    {m.role === 'user' ? m.text : <MarkdownMessage text={m.text} />}
                   </div>
                 </div>
               ))}
@@ -682,6 +927,26 @@ export default function Detail() {
                 </div>
               )}
             </div>
+
+            {/* Quick-prompt chips above input — clarifies supported actions
+                and gives the RM one-tap entry into each. Hidden once they
+                start typing or once the conversation has begun, to stay out
+                of the way. */}
+            {wsStatus === 'ready' && !waitingReply && chatInput.trim() === '' && (
+              <div className="px-3 pt-2 pb-1 bg-white shrink-0 border-t border-slate-100">
+                <div className="flex gap-1.5 flex-wrap">
+                  {QUICK_PROMPTS.map((q, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleQuickPrompt(q.text)}
+                      className="text-[11px] px-2.5 py-1 rounded-full border border-brand-200 text-brand-700 bg-brand-50 hover:bg-brand-100 transition font-medium"
+                    >
+                      {q.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Input */}
             <div className="border-t border-slate-100 p-3 bg-white shrink-0">
