@@ -73,27 +73,43 @@ const Field = ({ label, value }) => (
 // Lightweight markdown renderer for chatbot replies.
 // Supports: # / ## / ### headings, **bold**, *italic*, `code`,
 // [link](url), - / * / 1. lists (with nesting via 2-space indent),
-// blockquotes, --- horizontal rules, blank-line paragraphs.
+// blockquotes, --- horizontal rules, blank-line paragraphs,
+// tables (pipe-delimited), and auto-highlighting of currency amounts.
 // No external dependency — keeps package.json untouched.
 // ============================================================
+
+// Highlight currency amounts (₱1,234 / ₱1.6M) in slate-800 + semibold
+// so numbers pop against surrounding prose.
+const CURRENCY_RE = /(₱\s?[\d,]+(?:\.\d+)?(?:\s?[KMB])?)/g;
+
+function highlightNumbers(str, keyPrefix) {
+  const parts = str.split(CURRENCY_RE);
+  return parts.map((p, i) =>
+    CURRENCY_RE.test(p)
+      ? <span key={`${keyPrefix}-n${i}`} className="font-semibold text-slate-900 tabular-nums">{p}</span>
+      : p
+  );
+}
+
 function renderInline(text, keyPrefix = 'i') {
-  // Escape HTML-ish chars first by working with React nodes piecewise.
-  // Order matters: code -> link -> bold -> italic.
   const nodes = [];
   let remaining = text;
   let idx = 0;
-  // Combined regex with named-ish ordering through alternation
+  // Order matters: code -> link -> bold -> italic.
   const re = /(`[^`]+`)|(\[[^\]]+\]\([^)]+\))|(\*\*[^*]+\*\*)|(\*[^*\n]+\*)/;
   while (remaining.length) {
     const m = remaining.match(re);
     if (!m) {
-      nodes.push(remaining);
+      nodes.push(<span key={`${keyPrefix}-t${idx++}`}>{highlightNumbers(remaining, `${keyPrefix}-t${idx}`)}</span>);
       break;
     }
-    if (m.index > 0) nodes.push(remaining.slice(0, m.index));
+    if (m.index > 0) {
+      const plain = remaining.slice(0, m.index);
+      nodes.push(<span key={`${keyPrefix}-t${idx++}`}>{highlightNumbers(plain, `${keyPrefix}-t${idx}`)}</span>);
+    }
     const token = m[0];
     if (token.startsWith('`')) {
-      nodes.push(<code key={`${keyPrefix}-c${idx++}`} className="bg-slate-100 text-brand-700 px-1 py-0.5 rounded text-[12px] font-mono">{token.slice(1, -1)}</code>);
+      nodes.push(<code key={`${keyPrefix}-c${idx++}`} className="bg-slate-100 text-brand-700 px-1.5 py-0.5 rounded text-[12px] font-mono">{token.slice(1, -1)}</code>);
     } else if (token.startsWith('[')) {
       const linkMatch = token.match(/\[([^\]]+)\]\(([^)]+)\)/);
       if (linkMatch) {
@@ -111,13 +127,27 @@ function renderInline(text, keyPrefix = 'i') {
   return nodes;
 }
 
+// Split a list item's body into (leadLabel, rest) when it starts with
+// "**Label:**" or "Label:" followed by content — shown as a bold tag
+// followed by the description, similar to ChatGPT's list styling.
+function splitLeadLabel(text) {
+  // Markdown bold lead: **Label:** rest   OR   **Label** — rest
+  let m = text.match(/^\*\*([^*]+?)\*\*\s*[:：—-]\s*(.+)$/);
+  if (m) return { lead: m[1].trim(), rest: m[2].trim() };
+  // Plain lead: Label: rest  (only when label is short, no spaces-heavy)
+  m = text.match(/^([A-Z][A-Za-z0-9 /&.]{1,30})[:：]\s+(.+)$/);
+  if (m) return { lead: m[1].trim(), rest: m[2].trim() };
+  return null;
+}
+
 function MarkdownMessage({ text }) {
   if (!text) return null;
   const lines = String(text).replace(/\r\n/g, '\n').split('\n');
   const blocks = [];
   let i = 0;
-  let listBuffer = null; // { type: 'ul'|'ol', items: [{text, indent}] }
+  let listBuffer = null; // { type, items }
   let paraBuffer = [];
+  let tableBuffer = null; // { header: [], rows: [[]] }
 
   const flushPara = () => {
     if (paraBuffer.length) {
@@ -126,36 +156,58 @@ function MarkdownMessage({ text }) {
     }
   };
   const flushList = () => {
-    if (listBuffer) {
-      blocks.push(listBuffer);
-      listBuffer = null;
-    }
+    if (listBuffer) { blocks.push(listBuffer); listBuffer = null; }
+  };
+  const flushTable = () => {
+    if (tableBuffer) { blocks.push({ type: 'table', ...tableBuffer }); tableBuffer = null; }
+  };
+  const flushAll = () => { flushPara(); flushList(); flushTable(); };
+
+  const parseTableRow = (line) => {
+    // Strip leading/trailing pipes then split
+    let s = line.trim();
+    if (s.startsWith('|')) s = s.slice(1);
+    if (s.endsWith('|')) s = s.slice(0, -1);
+    return s.split('|').map(c => c.trim());
   };
 
   while (i < lines.length) {
     const raw = lines[i];
     const line = raw.trimEnd();
 
-    // Blank line — paragraph / list break
+    // Blank line
     if (line.trim() === '') {
-      flushPara();
-      flushList();
+      flushAll();
       i++;
       continue;
     }
 
     // Horizontal rule
     if (/^---+$/.test(line.trim())) {
-      flushPara(); flushList();
+      flushAll();
       blocks.push({ type: 'hr' });
       i++;
+      continue;
+    }
+
+    // Table: a line with | and the next line is a separator like |---|---|
+    if (line.includes('|') && lines[i + 1] && /^\s*\|?[\s:-]+\|[\s:|-]+$/.test(lines[i + 1])) {
+      flushPara(); flushList();
+      const header = parseTableRow(line);
+      i += 2; // skip separator
+      const rows = [];
+      while (i < lines.length && lines[i].includes('|') && lines[i].trim() !== '') {
+        rows.push(parseTableRow(lines[i]));
+        i++;
+      }
+      blocks.push({ type: 'table', header, rows });
       continue;
     }
 
     // Headings
     const h = line.match(/^(#{1,3})\s+(.*)$/);
     if (h) {
-      flushPara(); flushList();
+      flushAll();
       blocks.push({ type: 'h', level: h[1].length, text: h[2] });
       i++;
       continue;
@@ -163,7 +215,7 @@ function MarkdownMessage({ text }) {
 
     // Blockquote
     if (/^>\s?/.test(line)) {
-      flushPara(); flushList();
+      flushAll();
       blocks.push({ type: 'quote', text: line.replace(/^>\s?/, '') });
       i++;
       continue;
@@ -172,7 +224,7 @@ function MarkdownMessage({ text }) {
     // Unordered list item
     const ul = line.match(/^(\s*)[-*+]\s+(.*)$/);
     if (ul) {
-      flushPara();
+      flushPara(); flushTable();
       const indent = Math.floor(ul[1].length / 2);
       if (!listBuffer || listBuffer.type !== 'ul') {
         flushList();
@@ -184,63 +236,113 @@ function MarkdownMessage({ text }) {
     }
 
     // Ordered list item
-    const ol = line.match(/^(\s*)\d+\.\s+(.*)$/);
+    const ol = line.match(/^(\s*)(\d+)\.\s+(.*)$/);
     if (ol) {
-      flushPara();
+      flushPara(); flushTable();
       const indent = Math.floor(ol[1].length / 2);
       if (!listBuffer || listBuffer.type !== 'ol') {
         flushList();
         listBuffer = { type: 'ol', items: [] };
       }
-      listBuffer.items.push({ text: ol[2], indent });
+      listBuffer.items.push({ text: ol[3], indent, num: ol[2] });
       i++;
       continue;
     }
 
     // Default — paragraph line
-    flushList();
+    flushList(); flushTable();
     paraBuffer.push(line);
     i++;
   }
-  flushPara();
-  flushList();
+  flushAll();
 
   return (
-    <div className="space-y-2 text-sm leading-relaxed text-slate-800">
+    <div className="space-y-2.5 text-[13.5px] leading-[1.65] text-slate-700">
       {blocks.map((b, k) => {
         if (b.type === 'h') {
           const cls =
-            b.level === 1 ? 'text-base font-bold text-slate-900 mt-1' :
-            b.level === 2 ? 'text-sm font-bold text-slate-900 mt-1' :
-                            'text-sm font-semibold text-slate-800 mt-1';
+            b.level === 1
+              ? 'text-[15px] font-bold text-slate-900 mt-1 pb-1 border-b border-slate-200'
+              : b.level === 2
+                ? 'text-[14px] font-bold text-slate-900 mt-1'
+                : 'text-[13px] font-semibold text-slate-800 uppercase tracking-wide mt-0.5';
           return <div key={k} className={cls}>{renderInline(b.text, `h${k}`)}</div>;
         }
         if (b.type === 'p') {
-          return <p key={k}>{renderInline(b.text, `p${k}`)}</p>;
+          return <p key={k} className="text-slate-700">{renderInline(b.text, `p${k}`)}</p>;
         }
         if (b.type === 'hr') {
-          return <hr key={k} className="border-slate-200 my-2" />;
+          return <hr key={k} className="border-slate-200 my-1" />;
         }
         if (b.type === 'quote') {
           return (
-            <div key={k} className="border-l-2 border-brand-300 pl-3 text-slate-600 italic">
+            <div key={k} className="border-l-2 border-brand-300 bg-brand-50/40 pl-3 pr-2 py-1.5 rounded-r text-slate-600 italic">
               {renderInline(b.text, `q${k}`)}
             </div>
           );
         }
-        // Lists
-        const ListTag = b.type === 'ol' ? 'ol' : 'ul';
+        if (b.type === 'table') {
+          return (
+            <div key={k} className="overflow-x-auto -mx-1 my-1">
+              <table className="min-w-full text-[12.5px] border border-slate-200 rounded-lg overflow-hidden">
+                <thead className="bg-slate-50">
+                  <tr>
+                    {b.header.map((h, j) => (
+                      <th key={j} className="text-left font-semibold text-slate-700 px-2.5 py-1.5 border-b border-slate-200">
+                        {renderInline(h, `th${k}-${j}`)}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {b.rows.map((row, ri) => (
+                    <tr key={ri} className="border-t border-slate-100">
+                      {row.map((cell, ci) => (
+                        <td key={ci} className="px-2.5 py-1.5 align-top text-slate-700">
+                          {renderInline(cell, `td${k}-${ri}-${ci}`)}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          );
+        }
+
+        // Lists — render with label-first styling if the item starts with "**Label:**"
+        const isOrdered = b.type === 'ol';
         return (
-          <ListTag
-            key={k}
-            className={`${b.type === 'ol' ? 'list-decimal' : 'list-disc'} pl-5 space-y-1 marker:text-slate-400`}
-          >
-            {b.items.map((it, j) => (
-              <li key={j} className={it.indent > 0 ? 'ml-' + (it.indent * 4) : ''}>
-                {renderInline(it.text, `li${k}-${j}`)}
-              </li>
-            ))}
-          </ListTag>
+          <ul key={k} className="space-y-1.5 pl-0.5">
+            {b.items.map((it, j) => {
+              const split = splitLeadLabel(it.text);
+              const marginLeft = it.indent > 0 ? { marginLeft: it.indent * 16 } : undefined;
+              return (
+                <li key={j} className="flex gap-2 items-start" style={marginLeft}>
+                  <span className="shrink-0 mt-[3px]">
+                    {isOrdered ? (
+                      <span className="inline-flex items-center justify-center w-[18px] h-[18px] rounded-full bg-brand-100 text-brand-700 text-[10px] font-bold leading-none">
+                        {it.num || (j + 1)}
+                      </span>
+                    ) : (
+                      <span className="block w-1.5 h-1.5 mt-[7px] rounded-full bg-brand-500" />
+                    )}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    {split ? (
+                      <>
+                        <span className="font-semibold text-slate-900">{renderInline(split.lead, `lil${k}-${j}`)}</span>
+                        <span className="text-slate-500"> — </span>
+                        <span>{renderInline(split.rest, `lir${k}-${j}`)}</span>
+                      </>
+                    ) : (
+                      renderInline(it.text, `li${k}-${j}`)
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         );
       })}
     </div>
@@ -314,13 +416,16 @@ function DonutChart({ data, size = 180 }) {
   );
 }
 
-// Quick prompts shown above the chat input — give the RM clear examples
-// of what the AI Assistant supports, addressing Indivara's feedback that
-// the chatbot's capabilities & boundaries were unclear.
+// ============================================================
+// Quick-prompt chips shown above the chat input.
+// To customize: edit the `label` (button text shown to the RM)
+// and `text` (the actual question sent to the agent) below.
+// Add/remove entries freely — the UI renders whatever is in this array.
+// ============================================================
 const QUICK_PROMPTS = [
-  { label: 'Recommend products', text: 'Recommend 2-3 suitable products for this customer.' },
-  { label: 'Why not a fund?',    text: 'Why would ATRAM Global AI Feeder Fund not be suitable for this customer?' },
-  { label: 'Draft an opener',    text: 'Help me draft a conversation opener for this client.' },
+  { label: 'Recommend products',    text: 'Recommend 2-3 suitable products for this customer.' },
+  { label: 'Risk Alignment Check',  text: 'Check this client\'s risk alignment and flag any suitability gaps.' },
+  { label: 'Conversation Prep',     text: 'Help me prepare for a conversation with this client.' },
 ];
 
 export default function Detail() {
@@ -874,16 +979,6 @@ export default function Detail() {
                 </button>
               </div>
             </div>
-
-            {/* Capability hint banner — shown only when chat is empty */}
-            {chatMessages.length === 0 && wsStatus !== 'connecting' && wsStatus !== 'error' && (
-              <div className="px-4 py-3 bg-bannerBg border-b border-brand-100 shrink-0">
-                <div className="text-[11px] uppercase tracking-wider text-brand-700 font-semibold mb-1">What I can help with</div>
-                <div className="text-xs text-slate-600 leading-relaxed">
-                  Suitable product recommendations, suitability rationale for any specific fund, and conversation openers — all grounded in this client's profile.
-                </div>
-              </div>
-            )}
 
             {/* Messages */}
             <div ref={messagesEndRef} className="flex-1 overflow-y-auto p-4 bg-slate-50 space-y-3">
