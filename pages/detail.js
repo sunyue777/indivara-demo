@@ -515,7 +515,7 @@ export default function Detail() {
 
     // Target: finish within ~1.2s for typical replies, ~2s for very long ones.
     // Adjust chunk size so we land in that window.
-    const targetMs = Math.min(2000, Math.max(600, total * 6));
+    const targetMs = Math.min(4000, Math.max(1000, total * 10));
     const intervalMs = 24;
     const chunk = Math.max(2, Math.ceil(total / (targetMs / intervalMs)));
 
