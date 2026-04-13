@@ -30,10 +30,10 @@ const statusBg = {
 
 // Per-flag accent colors used for the banner left border + active chip
 const FLAG_META = {
-  GROWTH:    { label: 'Growth Opportunity',     accent: 'border-l-emerald-500', chipActive: 'bg-emerald-600 text-white border-emerald-600' },
-  UPSELL:    { label: 'Up-sell Opportunity',    accent: 'border-l-violet-500',  chipActive: 'bg-violet-600 text-white border-violet-600' },
-  REBALANCE: { label: 'Rebalance Alert',        accent: 'border-l-rose-500',    chipActive: 'bg-rose-600 text-white border-rose-600' },
-  CROSSSELL: { label: 'Cross-sell Opportunity', accent: 'border-l-amber-500',   chipActive: 'bg-amber-600 text-white border-amber-600' },
+  GROWTH:        { label: 'Growth Opportunity',     accent: 'border-l-emerald-500', chipActive: 'bg-emerald-600 text-white border-emerald-600' },
+  UPSELL:        { label: 'Up-sell Opportunity',    accent: 'border-l-violet-500',  chipActive: 'bg-violet-600 text-white border-violet-600' },
+  RISK_MISMATCH: { label: 'Risk Mismatch',          accent: 'border-l-rose-500',    chipActive: 'bg-rose-600 text-white border-rose-600' },
+  CROSSSELL:     { label: 'Cross-sell Opportunity', accent: 'border-l-amber-500',   chipActive: 'bg-amber-600 text-white border-amber-600' },
 };
 
 const DONUT_COLORS = [
@@ -460,6 +460,12 @@ export default function Detail() {
   const [chatMessages, setChatMessages] = useState([]); // [{role: 'user'|'agent'|'system', text: string}]
   const [chatInput, setChatInput] = useState('');
   const [waitingReply, setWaitingReply] = useState(false);
+  // Streaming state — when an agent reply arrives in full, we pipe it
+  // through a typewriter so the message appears progressively. This
+  // keeps the perceived latency low and the UI feels alive even though
+  // the underlying API delivers in one shot.
+  const [streamingText, setStreamingText] = useState('');
+  const streamTimerRef = useRef(null);
   const messagesEndRef = useRef(null);
   const lastAgentReplyRef = useRef(null); // Track last reply to prevent duplicates
 
@@ -488,6 +494,55 @@ export default function Detail() {
     return true;
   };
 
+  // Typewriter / progressive reveal for the agent's reply.
+  // The Agent Studio API delivers each answer in one shot, so we
+  // simulate streaming on the client to keep the UX responsive: the
+  // bubble appears immediately and characters fill in over ~600-1500ms
+  // depending on length. The chunk size + interval are tuned to feel
+  // close to a real LLM stream without being annoyingly slow on long
+  // recommendation lists.
+  const startStreaming = (fullText) => {
+    // Stop any previous stream
+    if (streamTimerRef.current) {
+      clearInterval(streamTimerRef.current);
+      streamTimerRef.current = null;
+    }
+    setWaitingReply(false);
+    setStreamingText('');
+
+    const total = fullText.length;
+    if (total === 0) return;
+
+    // Target: finish within ~1.2s for typical replies, ~2s for very long ones.
+    // Adjust chunk size so we land in that window.
+    const targetMs = Math.min(2000, Math.max(600, total * 6));
+    const intervalMs = 24;
+    const chunk = Math.max(2, Math.ceil(total / (targetMs / intervalMs)));
+
+    let cursor = 0;
+    streamTimerRef.current = setInterval(() => {
+      cursor = Math.min(total, cursor + chunk);
+      setStreamingText(fullText.slice(0, cursor));
+      if (cursor >= total) {
+        clearInterval(streamTimerRef.current);
+        streamTimerRef.current = null;
+        // Commit the full message and clear the streaming buffer
+        setChatMessages((prev) => [...prev, { role: 'agent', text: fullText }]);
+        setStreamingText('');
+      }
+    }, intervalMs);
+  };
+
+  // Cleanup any in-flight stream when the panel closes
+  useEffect(() => {
+    return () => {
+      if (streamTimerRef.current) {
+        clearInterval(streamTimerRef.current);
+        streamTimerRef.current = null;
+      }
+    };
+  }, []);
+
   // Open WebSocket when the chat panel is opened.
   // Auto-send customer_id as the first message so the agent loads
   // the client's profile from its database.
@@ -498,6 +553,11 @@ export default function Detail() {
     segmentCodeRef.current = newSegmentCode();
     lastAgentReplyRef.current = null;
     setChatMessages([]);
+    setStreamingText('');
+    if (streamTimerRef.current) {
+      clearInterval(streamTimerRef.current);
+      streamTimerRef.current = null;
+    }
     setWsStatus('connecting');
 
     const ws = new WebSocket(WS_URL);
@@ -526,9 +586,10 @@ export default function Detail() {
           if (reply && reply.trim() !== '') {
             if (lastAgentReplyRef.current !== reply) {
               lastAgentReplyRef.current = reply;
-              setChatMessages((prev) => [...prev, { role: 'agent', text: String(reply) }]);
+              startStreaming(String(reply));
+            } else {
+              setWaitingReply(false);
             }
-            setWaitingReply(false);
             return;
           }
         }
@@ -560,12 +621,12 @@ export default function Detail() {
     };
   }, [chatOpen, customer_id]);
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive (or stream grows)
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollTop = messagesEndRef.current.scrollHeight;
     }
-  }, [chatMessages, waitingReply]);
+  }, [chatMessages, waitingReply, streamingText]);
 
   const handleSendChat = () => {
     const text = chatInput.trim();
@@ -1010,13 +1071,28 @@ export default function Detail() {
                 </div>
               ))}
 
-              {waitingReply && (
+              {/* Streaming bubble — shown while the typewriter is filling in
+                  the latest agent reply. Renders the same markdown component
+                  as committed messages, with a blinking caret appended. */}
+              {streamingText && (
                 <div className="flex justify-start">
-                  <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-2 shadow-sm">
-                    <div className="flex gap-1">
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <div className="max-w-[88%] rounded-2xl rounded-bl-sm px-4 py-2.5 bg-white border border-slate-200 text-slate-800 shadow-sm">
+                    <MarkdownMessage text={streamingText} />
+                    <span className="inline-block w-[7px] h-[14px] bg-brand-500 ml-0.5 align-text-bottom animate-pulse rounded-sm" />
+                  </div>
+                </div>
+              )}
+
+              {waitingReply && !streamingText && (
+                <div className="flex justify-start">
+                  <div className="bg-white border border-slate-200 rounded-2xl rounded-bl-sm px-4 py-3 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <div className="flex gap-1">
+                        <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                        <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                        <span className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      </div>
+                      <span className="text-[11px] text-slate-400 italic">thinking…</span>
                     </div>
                   </div>
                 </div>
@@ -1027,7 +1103,7 @@ export default function Detail() {
                 and gives the RM one-tap entry into each. Hidden once they
                 start typing or once the conversation has begun, to stay out
                 of the way. */}
-            {wsStatus === 'ready' && !waitingReply && chatInput.trim() === '' && (
+            {wsStatus === 'ready' && !waitingReply && !streamingText && chatInput.trim() === '' && (
               <div className="px-3 pt-2 pb-1 bg-white shrink-0 border-t border-slate-100">
                 <div className="flex gap-1.5 flex-wrap">
                   {QUICK_PROMPTS.map((q, i) => (

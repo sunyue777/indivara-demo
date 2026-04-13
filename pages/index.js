@@ -11,32 +11,32 @@ const SALES_CODES = [
 ];
 
 const FILTERS = [
-  { key: 'ALL',       label: 'All Clients' },
-  { key: 'GROWTH',    label: 'Growth Opportunity' },
-  { key: 'UPSELL',    label: 'Up-sell Opportunity' },
-  { key: 'REBALANCE', label: 'Rebalance Alert' },
-  { key: 'CROSSSELL', label: 'Cross-sell Opportunity' },
+  { key: 'ALL',           label: 'All Clients' },
+  { key: 'GROWTH',        label: 'Growth Opportunity' },
+  { key: 'UPSELL',        label: 'Up-sell Opportunity' },
+  { key: 'RISK_MISMATCH', label: 'Risk Mismatch' },
+  { key: 'CROSSSELL',     label: 'Cross-sell Opportunity' },
 ];
 
 const TAG_PRIMARY = {
-  GROWTH:    'bg-emerald-600 text-white',
-  REBALANCE: 'bg-rose-600 text-white',
-  UPSELL:    'bg-violet-600 text-white',
-  CROSSSELL: 'bg-amber-600 text-white',
+  GROWTH:        'bg-emerald-600 text-white',
+  RISK_MISMATCH: 'bg-rose-600 text-white',
+  UPSELL:        'bg-violet-600 text-white',
+  CROSSSELL:     'bg-amber-600 text-white',
 };
 
 const TAG_MUTED = {
-  GROWTH:    'bg-emerald-50 text-emerald-600 border border-emerald-100',
-  REBALANCE: 'bg-rose-50 text-rose-600 border border-rose-100',
-  UPSELL:    'bg-violet-50 text-violet-600 border border-violet-100',
-  CROSSSELL: 'bg-amber-50 text-amber-600 border border-amber-100',
+  GROWTH:        'bg-emerald-50 text-emerald-600 border border-emerald-100',
+  RISK_MISMATCH: 'bg-rose-50 text-rose-600 border border-rose-100',
+  UPSELL:        'bg-violet-50 text-violet-600 border border-violet-100',
+  CROSSSELL:     'bg-amber-50 text-amber-600 border border-amber-100',
 };
 
 const TAG_SHORT = {
-  GROWTH: 'Growth',
-  REBALANCE: 'Rebalance',
-  UPSELL: 'Up-sell',
-  CROSSSELL: 'Cross-sell',
+  GROWTH:        'Growth',
+  RISK_MISMATCH: 'Risk Mismatch',
+  UPSELL:        'Up-sell',
+  CROSSSELL:     'Cross-sell',
 };
 
 const PAGE_SIZE = 20;
